@@ -497,9 +497,14 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
 
         void MoveToBed()
         {
-            if (allocatedBed != Vector3.zero)
+            PlayerMotor playerMotor = GameManager.Instance.PlayerMotor;
+            if (GameManager.Instance.PlayerEnterExit.IsPlayerInSelectedBed)
             {
-                PlayerMotor playerMotor = GameManager.Instance.PlayerMotor;
+                GameManager.Instance.PlayerEnterExit.IsPlayerInSelectedBed = false;
+                playerMotor.FixStanding(0.4f, 0f);
+            }
+            else if (allocatedBed != Vector3.zero)
+            {
                 playerMotor.transform.position = allocatedBed;
                 playerMotor.FixStanding(0.4f, 0.4f);
             }

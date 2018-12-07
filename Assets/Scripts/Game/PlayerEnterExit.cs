@@ -40,6 +40,7 @@ namespace DaggerfallWorkshop.Game
         bool isPlayerSwimming = false;
         bool isPlayerSubmerged = false;
         bool isRespawning = false;
+        bool isPlayerInSelectedBed = false;
         bool lastInteriorStartFlag;
         bool displayAfloatMessage = false;
         DaggerfallInterior interior;
@@ -161,6 +162,12 @@ namespace DaggerfallWorkshop.Game
         public bool IsRespawning
         {
             get { return isRespawning; }
+        }
+
+        public bool IsPlayerInSelectedBed
+        {
+            get { return isPlayerInSelectedBed; }
+            set { isPlayerInSelectedBed = value; }
         }
 
         /// <summary>
