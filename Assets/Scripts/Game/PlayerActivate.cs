@@ -474,8 +474,9 @@ namespace DaggerfallWorkshop.Game
                     // Check for functional interior furniture: Ladders, Bookshelves.
                     DaggerfallLadder ladder = hit.transform.GetComponent<DaggerfallLadder>();
                     DaggerfallBookshelf bookshelf = hit.transform.GetComponent<DaggerfallBookshelf>();
+                    DaggerfallBed bed = hit.transform.GetComponent<DaggerfallBed>();
 
-                    if (ladder || bookshelf)
+                    if (ladder || bookshelf || bed)
                     {
                         if (hit.distance > (DefaultActivationDistance * MeshReader.GlobalScale))
                         {
@@ -489,6 +490,10 @@ namespace DaggerfallWorkshop.Game
                         else if (bookshelf)
                         {   // Bookshelves:
                             bookshelf.ReadBook();
+                        }
+                        else if (bed)
+                        {
+                            bed.Rest();
                         }
                     }
                     // Debug for identifying interior furniture model ids.

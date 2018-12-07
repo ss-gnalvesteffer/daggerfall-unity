@@ -447,6 +447,10 @@ namespace DaggerfallWorkshop
                     MakeHouseContainer(obj, go, loadID);
                 }
             }
+            else if (buildingType == DFLocation.BuildingTypes.Tavern && obj.ModelIdNum == 41001)
+            {
+                go.AddComponent<DaggerfallBed>();
+            }
             // Handle generic furniture as (private) house containers:
             // (e.g. shelves, boxes, wardrobes, drawers etc)
             else if (obj.ModelIdNum / 100 == houseContainerObjectGroup ||
