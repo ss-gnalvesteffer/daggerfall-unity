@@ -324,6 +324,7 @@ namespace DaggerfallWorkshop
                                     propBlockName.stringValue,
                                     null,
                                     true,
+                                    null,
                                     DFRegion.DungeonTypes.HumanStronghold,
                                     0.5f,
                                     4,

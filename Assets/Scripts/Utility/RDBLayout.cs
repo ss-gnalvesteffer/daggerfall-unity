@@ -208,7 +208,7 @@ namespace DaggerfallWorkshop.Utility
         /// <summary>
         /// Add actions doors to block.
         /// </summary>
-        public static void AddActionDoors(GameObject go, Dictionary<int, ActionLink> actionLinkDict, ref DFBlock blockData, int[] textureTable, bool serialize = true)
+        public static void AddActionDoors(GameObject go, Dictionary<int, ActionLink> actionLinkDict, List<BoxCollider> doorsBoxColliders, ref DFBlock blockData, int[] textureTable, bool serialize = true)
         {
             DaggerfallUnity dfUnity = DaggerfallUnity.Instance;
             if (!dfUnity.IsReady)
@@ -245,6 +245,25 @@ namespace DaggerfallWorkshop.Utility
                         if (IsActionDoor(ref blockData, obj, modelReference))
                         {
                             GameObject cgo = AddActionDoor(dfUnity, modelId, obj, actionDoorsNode.transform, loadID);
+                            if (doorsBoxColliders != null)
+                            {
+                                BoxCollider boxCollider = cgo.GetComponent<BoxCollider>();
+                                bool found = false;
+                                foreach (BoxCollider otherBoxCollider in doorsBoxColliders)
+                                {
+                                    if (boxCollider.bounds.Intersects(otherBoxCollider.bounds))
+                                    {
+                                        found = true;
+                                        break;
+                                    }
+                                }
+                                if (found)
+                                {
+                                    Debug.Log("Deduplicated a door!");
+                                    continue;
+                                }
+                                doorsBoxColliders.Add(boxCollider);
+                            }
                             cgo.GetComponent<DaggerfallMesh>().SetDungeonTextures(textureTable);
 
                             // Add action component to door if it also has an action
