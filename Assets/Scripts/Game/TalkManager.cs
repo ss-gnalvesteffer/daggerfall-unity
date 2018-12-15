@@ -2116,11 +2116,14 @@ namespace DaggerfallWorkshop.Game
             // search for orphaned entries in rumor mill
             for (int i = listRumorMill.Count - 1; i >= 0; i--)
             {
-                ulong questID = listRumorMill[i].questID;
-                if (GameManager.Instance.QuestMachine.GetQuest(questID) == null)
+                if (listRumorMill[i].rumorType != RumorType.CommonRumor)
                 {
-                    Debug.Log(String.Format("save data contains orphaned rumors for quest with id {0}. Removing these rumors...", questID));
-                    listRumorMill.Remove(listRumorMill[i]);
+                    ulong questID = listRumorMill[i].questID;
+                    if (GameManager.Instance.QuestMachine.GetQuest(questID) == null)
+                    {
+                        Debug.Log(String.Format("save data contains orphaned rumors for quest with id {0}. Removing these rumors...", questID));
+                        listRumorMill.Remove(listRumorMill[i]);
+                    }
                 }
             }
 
