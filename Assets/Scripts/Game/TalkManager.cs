@@ -245,6 +245,10 @@ namespace DaggerfallWorkshop.Game
         const float DefaultChanceKnowsSomethingAboutOrganizationsMobileNPC = 0.0f; // chances unknown
         const float ChanceToRevealLocationOnMap = 0.25f; //chances unknown
 
+        const int MinCommonRumors = 4;
+        const float ProbabilityNewCommonRumorEachDay = 0.8f;
+        const float ProbabilityCommonRumorDiesEachDay = 0.1f;
+
         const int maxNumAnswersNpcGivesTellMeAboutOrRumors = 1; // maximum number of answers npc gives about "tell me about" question or rumors
 
         // specifies entry type of list item in topic lists
@@ -462,6 +466,7 @@ namespace DaggerfallWorkshop.Game
         }
         // list of rumors in rumor mill
         List<RumorMillEntry> listRumorMill = new List<RumorMillEntry>();
+        DaggerfallDateTime listRumorMillNextUpdate;
 
 
         // questor post quest message stuff (QuestorPostsuccess, QuestorPostfailure)
@@ -471,6 +476,7 @@ namespace DaggerfallWorkshop.Game
         {
             public Dictionary<ulong, QuestResources> dictQuestInfo;
             public List<RumorMillEntry> listRumorMill;
+            public DaggerfallDateTime listRumorMillNextUpdate = DaggerfallUnity.Instance.WorldTime.Now;
             public Dictionary<ulong, TextFile.Token[]> dictQuestorPostQuestMessage;
             public Dictionary<int, NpcWorkEntry> npcsWithWork;
             public Dictionary<int, bool> castleNPCsSpokenTo = new Dictionary<int, bool>();
@@ -2019,6 +2025,7 @@ namespace DaggerfallWorkshop.Game
             SaveDataConversation saveDataConversation = new SaveDataConversation();
             saveDataConversation.dictQuestInfo = dictQuestInfo;
             saveDataConversation.listRumorMill = listRumorMill;
+            saveDataConversation.listRumorMillNextUpdate = listRumorMillNextUpdate;
             saveDataConversation.dictQuestorPostQuestMessage = dictQuestorPostQuestMessage;
             saveDataConversation.npcsWithWork = npcsWithWork;
             saveDataConversation.castleNPCsSpokenTo = castleNPCsSpokenTo;
@@ -2108,6 +2115,7 @@ namespace DaggerfallWorkshop.Game
             }
 
             listRumorMill = data.listRumorMill;
+            listRumorMillNextUpdate = data.listRumorMillNextUpdate;
             if (listRumorMill == null || listRumorMill.Count == 0)
             {
                 SetupRumorMill();
@@ -2257,30 +2265,59 @@ namespace DaggerfallWorkshop.Game
         {
             if (listRumorMill == null)
                 listRumorMill = new List<RumorMillEntry>();
-            if (listRumorMill.Count == 0)
+            int commonRumorsCount = 0;
+            for (int i = 0; i < listRumorMill.Count; i++)
+                if (listRumorMill[i].rumorType == RumorType.CommonRumor)
+                    commonRumorsCount++;
+
+            bool atLeastADayPassed = false;
+            while (commonRumorsCount > 0 && DaggerfallUnity.Instance.WorldTime.Now.GreaterThan(listRumorMillNextUpdate))
             {
-                for (int i = 0; i < 10; i++) // setup 10 random common rumors (this is very early work in progress)
+                for (int i = listRumorMill.Count - 1; i >= 0; i--)
                 {
-                    RumorMillEntry entry = new RumorMillEntry();
-
-                    TextFile.Token[] tokens;
-                    int randomNum = UnityEngine.Random.Range(0, 20);
-                    if (randomNum >= 0 && randomNum <= 9)
-                        tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1400 + randomNum);
-                    else if (randomNum == 10)
-                        tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1456);
-                    else if (randomNum >= 11 && randomNum <= 15)
-                        tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1480);
-                    else if (randomNum >= 16 && randomNum <= 20)
-                        tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1481);
-                    else
-                        tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1457);
-                    entry.rumorType = RumorType.CommonRumor;
-                    entry.listRumorVariants = new List<TextFile.Token[]>();
-                    entry.listRumorVariants.Add(tokens);
-
-                    listRumorMill.Add(entry);
+                    if (listRumorMill[i].rumorType == RumorType.CommonRumor && UnityEngine.Random.Range(0f, 1f) < ProbabilityCommonRumorDiesEachDay)
+                    {
+                        Debug.Log("Killing an old common rumor");
+                        listRumorMill.RemoveAt(i);
+                        commonRumorsCount--;
+                    }
                 }
+                listRumorMillNextUpdate.RaiseTime(DaggerfallDateTime.SecondsPerDay);
+                atLeastADayPassed = true;
+            }
+            if (commonRumorsCount == 0)
+            {
+                // Could have skipped days because all rumors died
+                listRumorMillNextUpdate = DaggerfallUnity.Instance.WorldTime.Now;
+                listRumorMillNextUpdate.RaiseTime(DaggerfallDateTime.SecondsPerDay);
+            }
+
+            while (commonRumorsCount < MinCommonRumors || atLeastADayPassed && UnityEngine.Random.Range(0f, 1f) < ProbabilityNewCommonRumorEachDay)
+            {
+                Debug.Log("Creating a new common rumor");
+                RumorMillEntry entry = new RumorMillEntry();
+
+                TextFile.Token[] tokens;
+                int randomNum = UnityEngine.Random.Range(0, 20);
+                if (randomNum >= 0 && randomNum <= 9)
+                    tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1400 + randomNum);
+                else if (randomNum == 10)
+                    tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1456);
+                else if (randomNum >= 11 && randomNum <= 15)
+                    tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1480);
+                else if (randomNum >= 16 && randomNum <= 20)
+                    tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1481);
+                else
+                    tokens = DaggerfallUnity.Instance.TextProvider.GetRandomTokens(1457);
+                entry.rumorType = RumorType.CommonRumor;
+                entry.listRumorVariants = new List<TextFile.Token[]>();
+                entry.listRumorVariants.Add(tokens);
+
+                listRumorMill.Add(entry);
+                commonRumorsCount++;
+                // Can only happen for opportunistic new rumor case
+                if (commonRumorsCount >= MinCommonRumors)
+                    break;
             }
         }
 
