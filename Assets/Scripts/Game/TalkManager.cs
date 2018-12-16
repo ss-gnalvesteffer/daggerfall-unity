@@ -466,7 +466,6 @@ namespace DaggerfallWorkshop.Game
         }
         // list of rumors in rumor mill
         List<RumorMillEntry> listRumorMill = new List<RumorMillEntry>();
-        DaggerfallDateTime listRumorMillNextUpdate;
 
 
         // questor post quest message stuff (QuestorPostsuccess, QuestorPostfailure)
@@ -476,7 +475,6 @@ namespace DaggerfallWorkshop.Game
         {
             public Dictionary<ulong, QuestResources> dictQuestInfo;
             public List<RumorMillEntry> listRumorMill;
-            public DaggerfallDateTime listRumorMillNextUpdate = DaggerfallUnity.Instance.WorldTime.Now;
             public Dictionary<ulong, TextFile.Token[]> dictQuestorPostQuestMessage;
             public Dictionary<int, NpcWorkEntry> npcsWithWork;
             public Dictionary<int, bool> castleNPCsSpokenTo = new Dictionary<int, bool>();
@@ -578,6 +576,10 @@ namespace DaggerfallWorkshop.Game
             PlayerEnterExit.OnTransitionDungeonExterior += OnTransitionToDungeonExterior;
             PlayerEnterExit.OnTransitionDungeonInterior += OnTransitionToDungeonInterior;
             SaveLoadManager.OnLoad += OnLoadEvent;
+
+            // When do common rumors spread/die
+            WorldTime.OnDusk += WorldTime_OnDusk;
+            Debug.Log("Common rumors ready to be updated at dusk");
 
             // initialize work variables
             exteriorUsedForQuestors = 0;
@@ -799,7 +801,7 @@ namespace DaggerfallWorkshop.Game
                 AssembleTopicLists();
                 rebuildTopicLists = false;
             }
-            SetupRumorMill();
+            UpdateRumorMill();
         }
 
         public string GetNPCGreetingText()
@@ -1130,7 +1132,7 @@ namespace DaggerfallWorkshop.Game
         public void AddQuestRumorToRumorMill(ulong questID, Message message)
         {
             if (listRumorMill == null || listRumorMill.Count == 0)
-                SetupRumorMill();
+                UpdateRumorMill();
 
             RumorMillEntry entry = new RumorMillEntry();
             entry.rumorType = RumorType.QuestRumorMill;
@@ -1148,7 +1150,7 @@ namespace DaggerfallWorkshop.Game
         public void AddQuestRumorToRumorMill(ulong questID, List<TextFile.Token[]> listTokens)
         {
             if (listRumorMill == null || listRumorMill.Count == 0)
-                SetupRumorMill();
+                UpdateRumorMill();
 
             if (listTokens.Count > 0)
             {
@@ -1164,7 +1166,7 @@ namespace DaggerfallWorkshop.Game
         public void AddOrReplaceQuestProgressRumor(ulong questID, Message message)
         {
             if (listRumorMill == null || listRumorMill.Count == 0)
-                SetupRumorMill();
+                UpdateRumorMill();
 
             int i;
             for (i = 0; i < listRumorMill.Count; i++)
@@ -2118,7 +2120,7 @@ namespace DaggerfallWorkshop.Game
             listRumorMillNextUpdate = data.listRumorMillNextUpdate;
             if (listRumorMill == null || listRumorMill.Count == 0)
             {
-                SetupRumorMill();
+                UpdateRumorMill();
             }
 
             // search for orphaned entries in rumor mill
@@ -2261,7 +2263,7 @@ namespace DaggerfallWorkshop.Game
         }
 
 
-        private void SetupRumorMill()
+        private void UpdateRumorMill()
         {
             if (listRumorMill == null)
                 listRumorMill = new List<RumorMillEntry>();
@@ -2270,29 +2272,17 @@ namespace DaggerfallWorkshop.Game
                 if (listRumorMill[i].rumorType == RumorType.CommonRumor)
                     commonRumorsCount++;
 
-            bool atLeastADayPassed = false;
-            while (commonRumorsCount > 0 && DaggerfallUnity.Instance.WorldTime.Now.GreaterThan(listRumorMillNextUpdate))
+            for (int i = listRumorMill.Count - 1; i >= 0; i--)
             {
-                for (int i = listRumorMill.Count - 1; i >= 0; i--)
+                if (listRumorMill[i].rumorType == RumorType.CommonRumor && UnityEngine.Random.Range(0f, 1f) < ProbabilityCommonRumorDiesEachDay)
                 {
-                    if (listRumorMill[i].rumorType == RumorType.CommonRumor && UnityEngine.Random.Range(0f, 1f) < ProbabilityCommonRumorDiesEachDay)
-                    {
-                        Debug.Log("Killing an old common rumor");
-                        listRumorMill.RemoveAt(i);
-                        commonRumorsCount--;
-                    }
+                    Debug.Log("Killing an old common rumor");
+                    listRumorMill.RemoveAt(i);
+                    commonRumorsCount--;
                 }
-                listRumorMillNextUpdate.RaiseTime(DaggerfallDateTime.SecondsPerDay);
-                atLeastADayPassed = true;
-            }
-            if (commonRumorsCount == 0)
-            {
-                // Could have skipped days because all rumors died
-                listRumorMillNextUpdate = DaggerfallUnity.Instance.WorldTime.Now;
-                listRumorMillNextUpdate.RaiseTime(DaggerfallDateTime.SecondsPerDay);
             }
 
-            while (commonRumorsCount < MinCommonRumors || atLeastADayPassed && UnityEngine.Random.Range(0f, 1f) < ProbabilityNewCommonRumorEachDay)
+            while (commonRumorsCount < MinCommonRumors || UnityEngine.Random.Range(0f, 1f) < ProbabilityNewCommonRumorEachDay)
             {
                 Debug.Log("Creating a new common rumor");
                 RumorMillEntry entry = new RumorMillEntry();
@@ -2315,11 +2305,16 @@ namespace DaggerfallWorkshop.Game
 
                 listRumorMill.Add(entry);
                 commonRumorsCount++;
-                // Can only happen for opportunistic new rumor case
-                if (commonRumorsCount >= MinCommonRumors)
-                    break;
             }
         }
+
+
+        private void WorldTime_OnDusk()
+        {
+            Debug.Log("Updating common rumors at dusk");
+            UpdateRumorMill();
+        }
+
 
         private void GetBuildingList()
         {
