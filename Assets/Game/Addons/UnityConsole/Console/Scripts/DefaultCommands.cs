@@ -85,6 +85,7 @@ namespace Wenzil.Console
             ConsoleCommandsDatabase.RegisterCommand(DumpBlock.name, DumpBlock.description, DumpBlock.usage, DumpBlock.Execute);
             ConsoleCommandsDatabase.RegisterCommand(DumpLocBlocks.name, DumpLocBlocks.description, DumpLocBlocks.usage, DumpLocBlocks.Execute);
             ConsoleCommandsDatabase.RegisterCommand(DumpBuilding.name, DumpBuilding.description, DumpBuilding.usage, DumpBuilding.Execute);
+            ConsoleCommandsDatabase.RegisterCommand(IngredientUsage.name, IngredientUsage.description, IngredientUsage.usage, IngredientUsage.Execute);
 
             ConsoleCommandsDatabase.RegisterCommand(PlayFLC.name, PlayFLC.description, PlayFLC.usage, PlayFLC.Execute);
         }
@@ -211,6 +212,23 @@ namespace Wenzil.Console
                     return "Building data written to " + Path.Combine(Application.persistentDataPath, fileName);
                 }
                 return error;
+            }
+        }
+
+        private static class IngredientUsage
+        {
+            public static readonly string name = "ingredUsage";
+            public static readonly string description = "Log an analysis of potion recipe usage of ingredients";
+            public static readonly string usage = "ingredUsage";
+
+            public static string Execute(params string[] args)
+            {
+                if (args == null || args.Length > 0)
+                    return usage;
+
+                GameManager.Instance.EntityEffectBroker.LogRecipeIngredientUsage();
+
+                return "Finished";
             }
         }
 
@@ -1585,26 +1603,78 @@ namespace Wenzil.Console
         {
             public static readonly string name = "diseaseplayer";
             public static readonly string description = "Infect player with a classic disease.";
-            public static readonly string usage = "diseaseplayer index (a number 0-16)";
+            public static readonly string usage = "diseaseplayer index (a number 0-16) OR diseaseplayer vampire|werewolf|wereboar (Note: only vampire currently implemented)";
+
+            enum CommandDiseaseTypes
+            {
+                Numerical,
+                Vampire,
+                Werewolf,
+                Wereboar,
+            }
 
             public static string Execute(params string[] args)
             {
                 if (args == null || args.Length != 1)
                     return usage;
 
-                // Get index and validate range
-                int index;
-                if (!int.TryParse(args[0], out index))
-                    return string.Format("Could not parse argument `{0}` to a number", args[0]);
-                if (index < 0 || index > 16)
-                    return string.Format("Index {0} is out range. Must be 0-16.", index);
+                // Determine if valid string or expecting index
+                CommandDiseaseTypes diseaseType;
+                switch (args[0].ToLower())
+                {
+                    case "vampire":
+                        diseaseType = CommandDiseaseTypes.Vampire;
+                        break;
+                    case "werewolf":
+                        diseaseType = CommandDiseaseTypes.Werewolf;
+                        break;
+                    case "wereboar":
+                        diseaseType = CommandDiseaseTypes.Wereboar;
+                        break;
+                    default:
+                        diseaseType = CommandDiseaseTypes.Numerical;
+                        break;
+                }
 
-                // Infect player
-                Diseases disease = (Diseases)index;
-                EntityEffectBundle bundle = GameManager.Instance.PlayerEffectManager.CreateDisease(disease);
-                GameManager.Instance.PlayerEffectManager.AssignBundle(bundle);
-                
-                return string.Format("Player infected with {0}", disease.ToString());
+                // Disease player by index
+                if (diseaseType == CommandDiseaseTypes.Numerical)
+                {
+                    // Get index and validate range
+                    int index = -1;
+                    if (!int.TryParse(args[0], out index))
+                        return string.Format("Could not parse argument `{0}` to a number", args[0]);
+                    if (index < 0 || index > 16)
+                        return string.Format("Index {0} is out range. Must be 0-16.", index);
+
+                    // Infect player
+                    Diseases disease = (Diseases)index;
+                    EntityEffectBundle bundle = GameManager.Instance.PlayerEffectManager.CreateDisease(disease);
+                    GameManager.Instance.PlayerEffectManager.AssignBundle(bundle);
+                    return string.Format("Player infected with {0}", disease.ToString());
+                }
+
+                // Vampirism/Werewolf/Wereboar
+                if (diseaseType == CommandDiseaseTypes.Vampire)
+                {
+                    // Infect player with vampirism stage one
+                    EntityEffectBundle bundle = GameManager.Instance.PlayerEffectManager.CreateVampirismDisease();
+                    GameManager.Instance.PlayerEffectManager.AssignBundle(bundle);
+                    return "Player infected with vampirism.";
+                }
+                else if (diseaseType == CommandDiseaseTypes.Werewolf)
+                {
+                    // Infect player with werewolf stage one
+                    return "Werewolf disease not implemented yet.";
+                }
+                else if (diseaseType == CommandDiseaseTypes.Wereboar)
+                {
+                    // Infect player with wereboar stage one
+                    return "Wereboar disease not implemented yet.";
+                }
+                else
+                {
+                    return usage;
+                }
             }
         }
 

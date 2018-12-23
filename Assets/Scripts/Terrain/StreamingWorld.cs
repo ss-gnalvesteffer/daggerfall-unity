@@ -968,7 +968,7 @@ namespace DaggerfallWorkshop
                     {
                         terrainArray[i].mapPixelX = int.MinValue;
                         terrainArray[i].mapPixelY = int.MinValue;
-                        terrainArray[i].updateLocation = false;
+                        terrainArray[i].updateLocation = terrainArray[i].hasLocation;
                     }
                 }
             }
@@ -1025,6 +1025,7 @@ namespace DaggerfallWorkshop
             LocalPlayerGPS.UpdateWorldInfo();
             autoRepositionOffset = repositionOffset;
             autoRepositionMethod = autoReposition;
+            suppressWorld = false;
             InitWorld();
             // Clear falling damage so player doesn't take damage if they were in the air before a transition
             GameManager.Instance.AcrobatMotor.ClearFallingDamage();

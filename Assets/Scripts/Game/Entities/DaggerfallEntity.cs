@@ -63,7 +63,7 @@ namespace DaggerfallWorkshop.Game.Entity
         bool[] resistanceFlags = new bool[5];     // Indices map to DFCareer.Elements 0-4
         int[] resistanceChances = new int[5];
 
-        // Temp entity spellbook
+        // Entity spellbook
         protected List<EffectBundleSettings> spellbook = new List<EffectBundleSettings>();
 
         #endregion
@@ -73,6 +73,7 @@ namespace DaggerfallWorkshop.Game.Entity
         // Entity magic effect flags
         // Note: These properties are intentionally not serialized. They should only be set by live effects.
         public bool IsImmuneToParalysis { get; set; }
+        public bool IsImmuneToDisease { get; set; }
         public bool IsSilenced { get; set; }
         public bool IsWaterWalking { get; set; }
         public bool IsWaterBreathing { get; set; }
@@ -543,25 +544,26 @@ namespace DaggerfallWorkshop.Game.Entity
         }
 
         /// <summary>
-        /// Gets resistance chance as set by ElementalResistance effect.
-        /// This is only used when corresponding element resistance flag is raised by effect.
+        /// Gets current total resistance chance for an element.
+        /// This is only used when corresponding elemental resistance flag is raised by effect.
         /// </summary>
-        /// <param name="elementType">Element type.</param>
-        /// <returns>Resistance chance.</returns>
+        /// <param name="elementType">Element type to check total resistance value of.</param>
+        /// <returns>Resistance chance for that element.</returns>
         public int GetResistanceChance(DFCareer.Elements elementType)
         {
             return resistanceChances[(int)elementType];
         }
 
         /// <summary>
-        /// Sets resistance chance from ElementalResistance effect.
+        /// Raise resistance chance total for an element.
         /// This is only used when corresponding element resistance flag is raised by effect.
+        /// Resistance chance is reset each frame so multiple effects can contribute to total resistance chance.
         /// </summary>
-        /// <param name="elementType">Element type.</param>
-        /// <param name="value">Resist chance.</param>
-        public void SetResistanceChance(DFCareer.Elements elementType, int value)
+        /// <param name="elementType">Element type to raise resistance of.</param>
+        /// <param name="value">Amount to raise resist chance for element.</param>
+        public void RaiseResistanceChance(DFCareer.Elements elementType, int value)
         {
-            resistanceChances[(int)elementType] = value;
+            resistanceChances[(int)elementType] += value;
         }
 
         #endregion
@@ -570,8 +572,6 @@ namespace DaggerfallWorkshop.Game.Entity
 
         // NOTES:
         //  Likely to add a custom spell collection class later for spellbook
-        //  Currently just need to wire up different ends of the systems and a simple collection will do here
-        //  These old v1 spells will be removed at some point in future when ready
 
         public int SpellbookCount()
         {
@@ -647,13 +647,13 @@ namespace DaggerfallWorkshop.Game.Entity
         }
 
         /// <summary>
-        /// Called when starting a new game or when a game starts to load.
-        /// Used to clear out any state that should not persist to a new game session.
+        /// Constant effects are cleared each frame by peered entity effect manager and must be actively set by effects maintaining them.
         /// </summary>
-        protected virtual void ResetEntityState()
+        public virtual void ClearConstantEffects()
         {
             IsParalyzed = false;
             IsImmuneToParalysis = false;
+            IsImmuneToDisease = false;
             IsSilenced = false;
             IsWaterWalking = false;
             IsWaterBreathing = false;
@@ -666,7 +666,20 @@ namespace DaggerfallWorkshop.Game.Entity
             IsResistingDiseaseOrPoison = false;
             IsResistingShock = false;
             IsResistingMagic = false;
-            Array.Clear(resistanceChances, 0, resistanceChances.Length);
+            resistanceChances[0] = 0;
+            resistanceChances[1] = 0;
+            resistanceChances[2] = 0;
+            resistanceChances[3] = 0;
+            resistanceChances[4] = 0;
+        }
+
+        /// <summary>
+        /// Called when starting a new game or when a game starts to load.
+        /// Used to clear out any state that should not persist to a new game session.
+        /// </summary>
+        protected virtual void ResetEntityState()
+        {
+            ClearConstantEffects();
             SetEntityDefaults();
         }
 

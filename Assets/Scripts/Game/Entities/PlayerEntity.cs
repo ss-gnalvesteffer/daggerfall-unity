@@ -9,6 +9,8 @@
 // Notes:
 //
 
+using UnityEngine;
+using System;
 using System.Collections.Generic;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
@@ -20,10 +22,11 @@ using DaggerfallWorkshop.Game.Player;
 using DaggerfallWorkshop.Game.UserInterfaceWindows;
 using DaggerfallWorkshop.Game.Utility;
 using DaggerfallWorkshop.Utility;
-using UnityEngine;
-using System;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Guilds;
+using DaggerfallWorkshop.Game.MagicAndEffects;
+using DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects;
+using DaggerfallWorkshop.Game.Questing;
 
 namespace DaggerfallWorkshop.Game.Entity
 {
@@ -34,11 +37,17 @@ namespace DaggerfallWorkshop.Game.Entity
     {
         #region Fields
 
+        public const string vampireSpellTag = "vampire";
+
         bool godMode = false;
         bool noTargetMode = false;
         bool preventEnemySpawns = false;
         bool preventNormalizingReputations = false;
         bool isResting = false;
+
+        bool hasStartedInitialVampireQuest = false;
+        //byte vampireClan = 0;
+        //uint lastTimeVampireNeedToKillSatiated = 0;
 
         const int testPlayerLevel = 1;
         const string testPlayerName = "Nameless";
@@ -125,7 +134,8 @@ namespace DaggerfallWorkshop.Game.Entity
         public bool PreventNormalizingReputations { get { return preventNormalizingReputations; } set { preventNormalizingReputations = value; } }
         public bool IsResting { get { return isResting; } set { isResting = value; } }
         public Races Race { get { return (Races)RaceTemplate.ID; } }
-        public RaceTemplate RaceTemplate { get { return raceTemplate; } set { raceTemplate = value; } }
+        public RaceTemplate RaceTemplate { get { return GetLiveRaceTemplate(); } }
+        public RaceTemplate BirthRaceTemplate { get { return raceTemplate; } set { raceTemplate = value; } }
         public int FaceIndex { get { return faceIndex; } set { faceIndex = value; } }
         public PlayerReflexes Reflexes { get { return reflexes; } set { reflexes = value; } }
         public ItemCollection WagonItems { get { return wagonItems; } set { wagonItems.ReplaceAll(value); } }
@@ -180,6 +190,16 @@ namespace DaggerfallWorkshop.Game.Entity
         #endregion
 
         #region Public Methods
+
+        public RaceTemplate GetLiveRaceTemplate()
+        {
+            // Look for racial override effect
+            RacialOverrideEffect racialOverrideEffect = GameManager.Instance.PlayerEffectManager.GetRacialOverrideEffect();
+            if (racialOverrideEffect != null)
+                return racialOverrideEffect.CustomRace;
+            else
+                return raceTemplate;
+        }
 
         public RoomRental_v1 GetRentedRoom(int mapId, int buildingKey)
         {
@@ -364,12 +384,11 @@ namespace DaggerfallWorkshop.Game.Entity
                 if (((i + lastGameMinutes) % 54720) == 0) // 38 days
                 {
                     RegionPowerAndConditionsUpdate(true);
-                    // GetVampireOrWerecreatureQuest(); Non-cure quest
+                    //StartVampireOrWereCreatureQuest(false);
                 }
 
-                // TODO: Get vampire/werecreature quest
                 //if (((i + lastGameMinutes) % 120960) == 0) // 84 days
-                //    GetVampireOrWerecreatureQuest(); cure quest
+                    //StartVampireOrWereCreatureQuest(true);
             }
 
             // TODO: Right now enemy spawns are only prevented when time has been raised for
@@ -435,6 +454,51 @@ namespace DaggerfallWorkshop.Game.Entity
             {
                 haveShownSurrenderToGuardsDialogue = false;
             }
+        }
+
+        // Recreation of vampire/werecreature quest starter from classic
+        // Notes:
+        // 1) In classic the initial quest can happen multiple times but this is probably a mistake.
+        // 2) Additional quests will come regardless of whether the initial quest was completed or failed, as the bool is set
+        //    when the initial quest begins, not on successful completion.
+        void StartVampireOrWereCreatureQuest(bool isCureQuest)
+        {
+            /* TEMP: Commenting out for now until quest deployment system is ready for this - please do not remove
+            if (Race == Races.Vampire)
+            {
+                if (isCureQuest)
+                {
+                    if (DFRandom.random_range_inclusive(10, 100) < 30)
+                        QuestMachine.Instance.InstantiateQuest("$CUREVAM");
+                }
+                else if (hasStartedInitialVampireQuest)
+                {
+                    // Get an appropriate quest for player's level?
+                    if (DFRandom.random_range_inclusive(1, 100) < 50)
+                    {
+                        // Get the regional vampire clan faction id for affecting reputation on success/failure, and current rep
+                        int factionId = 23; // TODO: get appropriate value - just hardcoding The Vraseth for now!
+                        int reputation = FactionData.GetReputation(factionId);
+
+                        // Select a quest at random from appropriate pool
+                        Quest offeredQuest = GameManager.Instance.QuestListsManager.GetGuildQuest(FactionFile.GuildGroups.Vampires, MembershipStatus.Nonmember, factionId, reputation, Level);
+                        if (offeredQuest != null)
+                            QuestMachine.Instance.InstantiateQuest(offeredQuest);
+                    }
+                }
+                else if (DFRandom.random_range_inclusive(1, 100) < 50)
+                {
+                    QuestMachine.Instance.InstantiateQuest("P0A01L00");
+                    hasStartedInitialVampireQuest = true;
+                }
+            }
+            /*else
+            {
+                if (playerIsWereCreature && isCureQuest && DFRandom.random_range_inclusive(1, 100) < 30)
+                {
+                    QuestMachine.Instance.InstantiateQuest("$CUREWER");
+                }
+            }*/
         }
 
         public bool IntermittentEnemySpawn(uint Minutes)
@@ -635,6 +699,9 @@ namespace DaggerfallWorkshop.Game.Entity
             if (GameManager.Instance.HowManyEnemiesOfType(MobileTypes.Knight_CityWatch) > 0)
             {
                 DaggerfallLocation dfLocation = GameManager.Instance.StreamingWorld.CurrentPlayerLocationObject;
+                if (dfLocation == null)
+                    return;
+
                 PopulationManager populationManager = dfLocation.GetComponent<PopulationManager>();
                 if (populationManager == null)
                     return;
@@ -721,6 +788,9 @@ namespace DaggerfallWorkshop.Game.Entity
             this.timeForDarkBrotherhoodLetter = character.timeForDarkBrotherhoodLetter;
             this.darkBrotherhoodRequirementTally = character.darkBrotherhoodRequirementTally;
             this.thievesGuildRequirementTally = character.thievesGuildRequirementTally;
+            this.hasStartedInitialVampireQuest = character.hasStartedInitialVampireQuest != 0;
+            //this.vampireClan = character.vampireClan;
+            //this.lastTimeVampireNeedToKillSatiated = character.lastTimeVampireNeedToKillSatiated;
 
             BackStory = character.backStory;
 
@@ -844,6 +914,82 @@ namespace DaggerfallWorkshop.Game.Entity
                     //}
                 }
             }
+        }
+
+        public void AssignPlayerVampireSpells(VampireClans clan)
+        {
+            // IDs from SPELLS.STD record ID https://en.uesp.net/wiki/Daggerfall:SPELLS.STD_indices
+            int levitateID = 4;
+            //int charmMortalID = 90;       // Not implemented
+            int calmHumanoidID = 91;
+            int nimblenessID = 85;
+            int paralysisID = 50;
+            int freeActionID = 10;
+            int healID = 64;
+            //int shieldID = 17;            // Not implemented
+            int resistColdID = 11;
+            int resistFireID = 12;
+            int resistShockID = 13;
+            int silenceID = 23;
+            int invisibilityID = 6;
+            int iceStormID = 20;
+            int wildfireID = 33;
+
+            // Common spells
+            AssignVampireSpell(levitateID);
+            //AssignVampireSpell(charmMortalID);
+            AssignVampireSpell(calmHumanoidID);
+
+            // Clan spells
+            switch (clan)
+            {
+                case VampireClans.Vraseth:
+                    AssignVampireSpell(nimblenessID);
+                    break;
+                case VampireClans.Khulari:
+                    AssignVampireSpell(paralysisID);
+                    break;
+                case VampireClans.Montalion:
+                    AssignVampireSpell(freeActionID);
+                    break;
+                case VampireClans.Thrafey:
+                    AssignVampireSpell(healID);
+                    break;
+                case VampireClans.Garlythi:
+                    //AssignVampireSpell(shieldID);
+                    break;
+                case VampireClans.Selenu:
+                    AssignVampireSpell(resistColdID);
+                    AssignVampireSpell(resistFireID);
+                    AssignVampireSpell(resistShockID);
+                    break;
+                case VampireClans.Lyrezi:
+                    AssignVampireSpell(silenceID);
+                    AssignVampireSpell(invisibilityID);
+                    break;
+                case VampireClans.Haarvenu:
+                    AssignVampireSpell(iceStormID);
+                    AssignVampireSpell(wildfireID);
+                    break;
+            }
+        }
+
+        void AssignVampireSpell(int id)
+        {
+            // Get spell record data
+            SpellRecord.SpellRecordData recordData;
+            if (!GameManager.Instance.EntityEffectBroker.GetClassicSpellRecord(id, out recordData))
+                return;
+
+            // Get effect bundle settings
+            EffectBundleSettings bundleSettings;
+            if (!GameManager.Instance.EntityEffectBroker.ClassicSpellRecordDataToEffectBundleSettings(recordData, BundleTypes.Spell, out bundleSettings))
+                return;
+
+            // Assign to player entity spellbook with some custom settings
+            bundleSettings.MinimumCastingCost = true;
+            bundleSettings.Tag = vampireSpellTag;
+            GameManager.Instance.PlayerEntity.AddSpell(bundleSettings);
         }
 
         /// <summary>
