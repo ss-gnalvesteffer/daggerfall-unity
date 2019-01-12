@@ -207,7 +207,7 @@ namespace DaggerfallWorkshop.Utility
         /// <summary>
         /// Add actions doors to block.
         /// </summary>
-        public static void AddActionDoors(GameObject go, Dictionary<int, ActionLink> actionLinkDict, List<BoxCollider> doorsBoxColliders, ref DFBlock blockData, int[] textureTable, bool serialize = true)
+        public static void AddActionDoors(GameObject go, Dictionary<int, ActionLink> actionLinkDict, List<Tuple<Bounds, GameObject>> doors, ref DFBlock blockData, int[] textureTable, bool serialize = true)
         {
             DaggerfallUnity dfUnity = DaggerfallUnity.Instance;
             if (!dfUnity.IsReady)
@@ -244,24 +244,35 @@ namespace DaggerfallWorkshop.Utility
                         if (IsActionDoor(ref blockData, obj, modelReference))
                         {
                             GameObject cgo = AddActionDoor(dfUnity, modelId, obj, actionDoorsNode.transform, loadID);
-                            if (doorsBoxColliders != null)
+                            if (doors != null)
                             {
-                                BoxCollider boxCollider = cgo.GetComponent<BoxCollider>();
-                                bool found = false;
-                                foreach (BoxCollider otherBoxCollider in doorsBoxColliders)
+                                Bounds bounds = cgo.GetComponent<BoxCollider>().bounds;
+                                int found = -1;
+                                for (int i = 0;  i < doors.Count;  i++)
                                 {
-                                    if (boxCollider.bounds.Intersects(otherBoxCollider.bounds))
+                                    if (bounds.Intersects(doors[i].First))
                                     {
-                                        found = true;
+                                        found = i;
                                         break;
                                     }
                                 }
-                                if (found)
+                                if (found >= 0)
                                 {
-                                    Debug.Log("Deduplicated a door!");
-                                    continue;
+                                    Debug.Log("Deduplicated a door! " + doors[found].First.ToString() + " / "+ bounds.ToString());
+                                    // Keep the highest door, should fix some too low doors
+                                    if (doors[found].First.max.z > bounds.max.z)
+                                    {
+                                        cgo.SetActive(false);
+                                    }
+                                    else
+                                    {
+                                        doors[found].Second.SetActive(false);
+                                        doors.RemoveAt(found);
+                                        found = -1;
+                                    }
                                 }
-                                doorsBoxColliders.Add(boxCollider);
+                                if (found < 0)
+                                    doors.Add(new Tuple<Bounds, GameObject>(bounds, cgo));
                             }
                             cgo.GetComponent<DaggerfallMesh>().SetDungeonTextures(textureTable);
 

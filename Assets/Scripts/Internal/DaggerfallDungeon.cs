@@ -263,7 +263,7 @@ namespace DaggerfallWorkshop
             // Calculate monster power - this is a clamped 0-1 value based on player's level from 1-20
             float monsterPower = Mathf.Clamp01(playerLevel / 20f);
 
-            List<BoxCollider> doorsBoxColliders = new List<BoxCollider>();
+            List<Tuple<Bounds, GameObject>> doors = new List<Tuple<Bounds, GameObject>>();
 
             // Create dungeon layout
             for (int i = 0; i < summary.LocationData.Dungeon.Blocks.Length; i++)
@@ -273,7 +273,7 @@ namespace DaggerfallWorkshop
                     block.BlockName,
                     DungeonTextureTable,
                     block.IsStartingBlock,
-                    doorsBoxColliders,
+                    doors,
                     Summary.DungeonType,
                     monsterPower,
                     RandomMonsterVariance,
@@ -295,7 +295,7 @@ namespace DaggerfallWorkshop
                 // Add water blocks
                 RDBLayout.AddWater(go, go.transform.position, block.WaterLevel);
             }
-            Debug.Log(String.Format("Found {0} non-colliding static doors", doorsBoxColliders.Count));
+            Debug.Log(String.Format("Found {0} non-colliding static doors", doors.Count));
 
 #if SHOW_LAYOUT_TIMES
             // Show timer
@@ -310,7 +310,7 @@ namespace DaggerfallWorkshop
             // Calculate monster power - this is a clamped 0-1 value based on player's level from 1-20
             float monsterPower = Mathf.Clamp01(GameManager.Instance.PlayerEntity.Level / 20f);
 
-            List<BoxCollider> doorsBoxColliders = new List<BoxCollider>();
+            List<Tuple<Bounds, GameObject>> doors = new List<Tuple<Bounds, GameObject>>();
 
             // Create dungeon layout and handle misplaced block
             for (int i = 0; i < summary.LocationData.Dungeon.Blocks.Length; i++)
@@ -323,7 +323,7 @@ namespace DaggerfallWorkshop
                     block.BlockName,
                     DungeonTextureTable,
                     block.IsStartingBlock,
-                    doorsBoxColliders,
+                    doors,
                     Summary.DungeonType,
                     monsterPower,
                     RandomMonsterVariance,

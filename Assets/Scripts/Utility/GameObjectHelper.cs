@@ -467,7 +467,7 @@ namespace DaggerfallWorkshop.Utility
             string blockName,
             int[] textureTable = null,
             bool allowExitDoors = true,
-            List<BoxCollider> doorsBoxColliders = null,
+            List<Tuple<Bounds, GameObject>> doors = null,
             DFRegion.DungeonTypes dungeonType = DFRegion.DungeonTypes.HumanStronghold,
             float monsterPower = 0.5f,
             int monsterVariance = 4,
@@ -486,7 +486,7 @@ namespace DaggerfallWorkshop.Utility
             DFBlock blockData;
             GameObject go = RDBLayout.CreateBaseGameObject(blockName, actionLinkDict, out blockData, textureTable, allowExitDoors, cloneFrom);
             // Add action doors
-            RDBLayout.AddActionDoors(go, actionLinkDict, doorsBoxColliders, ref blockData, textureTable);
+            RDBLayout.AddActionDoors(go, actionLinkDict, doors, ref blockData, textureTable);
 
             // Add lights
             RDBLayout.AddLights(go, ref blockData);
