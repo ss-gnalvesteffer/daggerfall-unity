@@ -26,6 +26,9 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects
     /// Handles deployment tasks over three-day infection window.
     /// This disease can be cured in the usual way up until it completes.
     /// Note: This disease should only be assigned to player entity.
+    ///
+    /// TODO:
+    ///  * Clear guild memberships and reset reputations
     /// </summary>
     public class VampirismInfection : DiseaseEffect
     {
@@ -67,8 +70,11 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects
             infectionRegionIndex = GameManager.Instance.PlayerGPS.CurrentRegionIndex;
 
             // Capture rest and travel events for disease progression on Start
-            DaggerfallRestWindow.OnSleepTick += ProgressDiseaseAfterSleepOrTravel;
-            DaggerfallTravelPopUp.OnPostFastTravel += ProgressDiseaseAfterSleepOrTravel;
+            if (IsIncumbent)
+            {
+                DaggerfallRestWindow.OnSleepTick += ProgressDiseaseAfterSleepOrTravel;
+                DaggerfallTravelPopUp.OnPostFastTravel += ProgressDiseaseAfterSleepOrTravel;
+            }
         }
 
         public override void Resume(EntityEffectManager.EffectSaveData_v1 effectData, EntityEffectManager manager, DaggerfallEntityBehaviour caster = null)
@@ -76,13 +82,23 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects
             base.Resume(effectData, manager, caster);
 
             // Capture rest and travel events for disease progression on Resume
-            DaggerfallRestWindow.OnSleepTick += ProgressDiseaseAfterSleepOrTravel;
-            DaggerfallTravelPopUp.OnPostFastTravel += ProgressDiseaseAfterSleepOrTravel;
+            if (IsIncumbent)
+            {
+                DaggerfallRestWindow.OnSleepTick += ProgressDiseaseAfterSleepOrTravel;
+                DaggerfallTravelPopUp.OnPostFastTravel += ProgressDiseaseAfterSleepOrTravel;
+            }
         }
 
         protected override void UpdateDisease()
         {
             // Not calling base as this is a very custom disease that manages its own lifecycle
+        }
+
+        public override void End()
+        {
+            base.End();
+            DaggerfallRestWindow.OnSleepTick -= ProgressDiseaseAfterSleepOrTravel;
+            DaggerfallTravelPopUp.OnPostFastTravel -= ProgressDiseaseAfterSleepOrTravel;
         }
 
         #region Private Methods
@@ -122,6 +138,12 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects
             // Cancel rest window if sleeping
             if (DaggerfallUI.Instance.UserInterfaceManager.TopWindow is DaggerfallRestWindow)
                 (DaggerfallUI.Instance.UserInterfaceManager.TopWindow as DaggerfallRestWindow).CloseWindow();
+
+            // Halt random enemy spawns for next playerEntity update so player isn't bombarded by spawned enemies after transform time
+            GameManager.Instance.PlayerEntity.PreventEnemySpawns = true;
+
+            // Reset legal reputation for all regions and strip player of guild memberships
+            ResetLegalRepAndGuildMembership();
 
             // Raise game time to an evening two weeks later
             float raiseTime = (2 * DaggerfallDateTime.SecondsPerWeek) + (DaggerfallDateTime.DuskHour + 1 - DaggerfallUnity.Instance.WorldTime.DaggerfallDateTime.Hour) * 3600;
@@ -175,6 +197,13 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects
                 throw new System.Exception("VampirismInfection.GetRandomCemetery() could not find a cemetery in this region.");
 
             return location;
+        }
+
+        void ResetLegalRepAndGuildMembership()
+        {
+            // TODO: Reset legal reputation for all regions and remove player's guilds memberships, but keep backup of current ranks
+            // UESP indicates that rank is restored after 28 days when player re-joins a guild as a vampire
+            // https://en.uesp.net/wiki/Daggerfall:Vampirism#Reputations
         }
 
         #endregion

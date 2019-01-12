@@ -193,7 +193,7 @@ namespace DaggerfallWorkshop.Game
             if (dfAudioSource)
             {
                 PlayerEntity playerEntity = GameManager.Instance.PlayerEntity;
-                SoundClips sound = DaggerfallEntity.GetRaceGenderAttackSound(playerEntity.Race, playerEntity.Gender);
+                SoundClips sound = DaggerfallEntity.GetRaceGenderAttackSound(playerEntity.Race, playerEntity.Gender, true);
                 float pitch = dfAudioSource.AudioSource.pitch;
                 dfAudioSource.AudioSource.pitch = pitch + UnityEngine.Random.Range(0, 0.3f);
                 dfAudioSource.PlayOneShot(sound, 0, 1f);
@@ -487,7 +487,7 @@ namespace DaggerfallWorkshop.Game
                     textures.Add(GetWeaponTexture2D(filename, record, frame, metalType, out rect, border, dilate));
 
                     Texture2D tex;
-                    if (TextureReplacement.TryImportCifRci(filename, record, frame, metalType, out tex))
+                    if (TextureReplacement.TryImportCifRci(filename, record, frame, metalType, false, out tex))
                     {
                         tex.filterMode = dfUnity.MaterialReader.MainFilterMode;
                         customTextures.Add(MaterialReader.MakeTextureKey(0, (byte)record, (byte)frame), tex);

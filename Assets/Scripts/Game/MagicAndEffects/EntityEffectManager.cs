@@ -397,8 +397,9 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
                     continue;
                 }
 
-                // Incoming disease effects are blocked if entity is hard immune to disease (e.g. vampires)
-                if (effect is DiseaseEffect && entityBehaviour.Entity.IsImmuneToDisease)
+                // Incoming disease and paralysis effects are blocked if entity is hard immune (e.g. vampires/lycanthropes)
+                if (effect is DiseaseEffect && IsEntityImmuneToDisease() ||
+                    effect is Paralyze && IsEntityImmuneToParalysis())
                 {
                     continue;
                 }
@@ -490,6 +491,24 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
                 RaiseOnAssignBundle(instancedBundle);
                 Debug.LogFormat("Adding bundle {0}", instancedBundle.GetHashCode());
             }
+        }
+
+        /// <summary>
+        /// Checks if peered entity is globally immune to disease from career or effect system.
+        /// </summary>
+        /// <returns>True if entity immune to disease.</returns>
+        public bool IsEntityImmuneToDisease()
+        {
+            return entityBehaviour.Entity.Career.Disease == DFCareer.Tolerance.Immune || entityBehaviour.Entity.IsImmuneToDisease;
+        }
+
+        /// <summary>
+        /// Checks if peered entity is globally immune to paralysis from career or effect system.
+        /// </summary>
+        /// <returns>True if entity immune to paralysis.</returns>
+        public bool IsEntityImmuneToParalysis()
+        {
+            return entityBehaviour.Entity.Career.Paralysis == DFCareer.Tolerance.Immune || entityBehaviour.Entity.IsImmuneToParalysis;
         }
 
         /// <summary>
@@ -716,7 +735,6 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
 
         /// <summary>
         /// Handles any magic-related work of equipping an item to this entity.
-        /// Does nothing if item contains no "cast when held" enchantments.
         /// </summary>
         /// <param name="item">Item just equipped.</param>
         public void StartEquippedItem(DaggerfallUnityItem item)
@@ -725,7 +743,22 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
             if (item == null || !item.IsEnchanted)
                 return;
 
-            // Equipped items must have "cast when held" enchantments
+            // All equipped magic items add a passive item specials effect
+            // This may or may not deliver any payload based on passive enchanment settings
+            EffectBundleSettings passiveItemSpecialsSettings = new EffectBundleSettings()
+            {
+                Version = EntityEffectBroker.CurrentSpellVersion,
+                BundleType = BundleTypes.HeldMagicItem,
+                TargetType = TargetTypes.None,
+                ElementType = ElementTypes.None,
+                Name = "Item Specials",
+                Effects = new EffectEntry[] { new EffectEntry(PassiveItemSpecialsEffect.EffectKey) },
+            };
+            EntityEffectBundle passiveItemSpecialsBundle = new EntityEffectBundle(passiveItemSpecialsSettings, entityBehaviour);
+            passiveItemSpecialsBundle.FromEquippedItem = item;
+            AssignBundle(passiveItemSpecialsBundle);
+
+            // Some equipped magic items have "cast when held" enchantments
             DaggerfallEnchantment[] enchantments = item.Enchantments;
             foreach (DaggerfallEnchantment enchantment in enchantments)
             {
@@ -921,14 +954,18 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
             else
                 absorbSpellPointsOut = effectCastingCost;
 
-            // Check if entity has an absorb incumbent running
+            // Handle effect-based absorption
             SpellAbsorption absorbEffect = FindIncumbentEffect<SpellAbsorption>() as SpellAbsorption;
-            if (absorbEffect != null)
-                return TryEffectBasedAbsorption(effect, absorbEffect, casterEntity);
+            if (absorbEffect != null && TryEffectBasedAbsorption(effect, absorbEffect, casterEntity))
+                return true;
 
             // Handle career-based absorption
-            if (entityBehaviour.Entity.Career.SpellAbsorption != DFCareer.SpellAbsorptionFlags.None)
-                return TryCareerBasedAbsorption(effect, casterEntity);
+            if (entityBehaviour.Entity.Career.SpellAbsorption != DFCareer.SpellAbsorptionFlags.None && TryCareerBasedAbsorption(effect, casterEntity))
+                return true;
+
+            // Handle persistant absorption (e.g. special advantage general/day/night or from weapon effects)
+            if (entityBehaviour.Entity.IsAbsorbingSpells)
+                return true;
 
             return false;
         }
@@ -946,7 +983,10 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
 
         bool TryEffectBasedAbsorption(IEntityEffect effect, SpellAbsorption absorbEffect, DaggerfallEntity casterEntity)
         {
-            return RollAbsorptionChance(absorbEffect, casterEntity);
+            int chance = absorbEffect.Settings.ChanceBase + absorbEffect.Settings.ChancePlus * (int)Mathf.Floor(casterEntity.Level / absorbEffect.Settings.ChancePerLevel);
+            int roll = UnityEngine.Random.Range(1, 100);
+
+            return (roll <= chance);
         }
 
         bool TryCareerBasedAbsorption(IEntityEffect effect, DaggerfallEntity casterEntity)
@@ -974,14 +1014,6 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
             }
 
             return false;
-        }
-
-        bool RollAbsorptionChance(SpellAbsorption absorbEffect, DaggerfallEntity casterEntity)
-        {
-            int chance = absorbEffect.Settings.ChanceBase + absorbEffect.Settings.ChancePlus * (int)Mathf.Floor(casterEntity.Level / absorbEffect.Settings.ChancePerLevel);
-            int roll = UnityEngine.Random.Range(1, 100);
-
-            return (roll <= chance);
         }
 
         #endregion
@@ -1182,7 +1214,13 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
 
         public bool HasVampirism()
         {
-            return FindIncumbentEffect<VampirismEffect>() != null;
+            return racialOverrideEffect is VampirismEffect;
+        }
+
+        public void EndVampirism()
+        {
+            if (HasVampirism())
+                (racialOverrideEffect as VampirismEffect).CureVampirism();
         }
 
         #endregion
@@ -1509,8 +1547,8 @@ namespace DaggerfallWorkshop.Game.MagicAndEffects
             {
                 EnemyBlood sparkles = readySpell.CasterEntityBehaviour.GetComponent<EnemyBlood>();
 
-                Vector3 sparklesPos = entityBehaviour.transform.position;
                 CharacterController targetController = entityBehaviour.transform.GetComponent<CharacterController>();
+                Vector3 sparklesPos = entityBehaviour.transform.position + targetController.center;
                 sparklesPos.y += targetController.height / 8;
 
                 if (sparkles)

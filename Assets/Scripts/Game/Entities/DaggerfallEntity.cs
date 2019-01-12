@@ -21,6 +21,8 @@ using DaggerfallWorkshop.Game.Items;
 using DaggerfallWorkshop.Game.Serialization;
 using DaggerfallWorkshop.Game.Utility;
 using DaggerfallWorkshop.Game.MagicAndEffects;
+using DaggerfallWorkshop.Utility;
+using DaggerfallWorkshop.Game.MagicAndEffects.MagicEffects;
 
 namespace DaggerfallWorkshop.Game.Entity
 {
@@ -81,6 +83,9 @@ namespace DaggerfallWorkshop.Game.Entity
         public bool IsEnhancedClimbing { get; set; }
         public bool IsEnhancedJumping { get; set; }
         public bool IsSlowFalling { get; set; }
+        public bool IsAbsorbingSpells { get; set; }
+        public int MaxMagickaModifier { get; private set; }
+
 
         /// <summary>
         /// Gets the DaggerfallEntityBehaviour related to this DaggerfallEntity.
@@ -247,7 +252,8 @@ namespace DaggerfallWorkshop.Game.Entity
         public float CurrentHealthPercent { get { return GetCurrentHealth() / (float)maxHealth; } }
         public int MaxFatigue { get { return (stats.LiveStrength + stats.LiveEndurance) * 64; } }
         public int CurrentFatigue { get { return GetCurrentFatigue(); } set { SetFatigue(value); } }
-        public int MaxMagicka { get { return (this == GameManager.Instance.PlayerEntity ? FormulaHelper.SpellPoints(stats.LiveIntelligence, career.SpellPointMultiplierValue) : maxMagicka); } set { maxMagicka = value; } }
+        public int MaxMagicka { get { return GetMaxMagicka(); } set { maxMagicka = value; } }
+        public int RawMaxMagicka { get { return GetRawMaxMagicka(); } }
         public int CurrentMagicka { get { return GetCurrentMagicka(); } set { SetMagicka(value); } }
         public int MaxBreath { get { return stats.LiveEndurance / 2; } }
         public int CurrentBreath { get { return currentBreath; } set { SetBreath(value); } }
@@ -356,6 +362,13 @@ namespace DaggerfallWorkshop.Game.Entity
             return currentMagicka;
         }
 
+        public void ChangeMaxMagickaModifier(int amount)
+        {
+            MaxMagickaModifier += amount;
+            if (CurrentMagicka > MaxMagicka)
+                CurrentMagicka = MaxMagicka;
+        }
+
         public virtual int SetBreath(int amount)
         {
             currentBreath = Mathf.Clamp(amount, 0, MaxBreath);
@@ -383,6 +396,26 @@ namespace DaggerfallWorkshop.Game.Entity
         int GetCurrentMagicka()
         {
             return currentMagicka;
+        }
+
+        // Gets maximum magicka with effect modifier
+        int GetMaxMagicka()
+        {
+            int effectiveMagicka = GetRawMaxMagicka() + MaxMagickaModifier;
+            if (effectiveMagicka < 0)
+                effectiveMagicka = 0;
+
+            return effectiveMagicka;
+        }
+
+        // Gets raw maximum magicka without modifier
+        int GetRawMaxMagicka()
+        {
+            // Player's maximum magicka determined by career and intelligence, enemies are set by level elsewhere
+            if (career != null && this == GameManager.Instance.PlayerEntity)
+                return FormulaHelper.SpellPoints(stats.LiveIntelligence, career.SpellPointMultiplierValue);
+            else
+                return maxMagicka;
         }
 
         #endregion
@@ -597,11 +630,42 @@ namespace DaggerfallWorkshop.Game.Entity
             return spellbook.ToArray();
         }
 
+        public void SwapSpells(int indexA, int indexB)
+        {
+            if (indexA < 0 || indexA >= spellbook.Count || indexB < 0 || indexB >= spellbook.Count || indexA == indexB)
+                return;
+            var tempSpell = spellbook[indexA];
+            spellbook[indexA] = spellbook[indexB];
+            spellbook[indexB] = tempSpell;
+        }
+
         public void SortSpellsAlpha()
         {
             List<EffectBundleSettings> sortedSpellbook = spellbook.OrderBy(x => x.Name).ToList();
             if (sortedSpellbook.Count == spellbook.Count)
                 spellbook = sortedSpellbook;
+        }
+
+        public void SortSpellsPointCost()
+        {
+            List<EffectBundleSettings> sortedSpellbook = spellbook
+                .OrderBy((EffectBundleSettings spell) =>
+                {
+                    int goldCost, spellPointCost;
+                    FormulaHelper.CalculateTotalEffectCosts(spell.Effects, spell.TargetType, out goldCost, out spellPointCost, null, spell.MinimumCastingCost);
+                    return spellPointCost;
+                })
+            .ToList();
+            if (sortedSpellbook.Count == spellbook.Count)
+                spellbook = sortedSpellbook;
+        }
+
+        public void SetSpell(int index, EffectBundleSettings spell)
+        {
+            if (index < 0 || index > spellbook.Count - 1)
+                return;
+
+            spellbook[index] = spell;
         }
 
         public void AddSpell(EffectBundleSettings spell)
@@ -661,6 +725,8 @@ namespace DaggerfallWorkshop.Game.Entity
             IsEnhancedClimbing = false;
             IsEnhancedJumping = false;
             IsSlowFalling = false;
+            IsAbsorbingSpells = false;
+            MaxMagickaModifier = 0;
             IsResistingFire = false;
             IsResistingFrost = false;
             IsResistingDiseaseOrPoison = false;
@@ -746,8 +812,17 @@ namespace DaggerfallWorkshop.Game.Entity
             return monsterFile.GetMonsterClass((int)career);
         }
 
-        public static SoundClips GetRaceGenderAttackSound(Races race, Genders gender)
+        public static SoundClips GetRaceGenderAttackSound(Races race, Genders gender, bool isPlayerAttack = false)
         {
+            // Check for racial override attack sound for player only
+            if (isPlayerAttack)
+            {
+                SoundClips customSound;
+                RacialOverrideEffect racialOverride = GameManager.Instance.PlayerEffectManager.GetRacialOverrideEffect();
+                if (racialOverride != null && racialOverride.GetCustomRaceGenderAttackSoundData(GameManager.Instance.PlayerEntity, out customSound))
+                    return customSound;
+            }
+
             if (gender == Genders.Male)
             {
                 switch (race)

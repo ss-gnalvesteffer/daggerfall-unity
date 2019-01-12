@@ -227,6 +227,24 @@ namespace DaggerfallWorkshop.Game.Items
                 }
             }
 
+            // Show trapped soul name if any
+            if (item.ItemGroup == ItemGroups.MiscItems && item.TemplateIndex == (int)MiscItems.Soul_trap)
+            {
+                if (item.TrappedSoulType != MobileTypes.None)
+                {
+                    MobileEnemy soul;
+                    if (EnemyBasics.GetEnemy(item.TrappedSoulType, out soul))
+                    {
+                        MobileEnemy mobileEnemy = GameObjectHelper.EnemyDict[(int)item.TrappedSoulType];
+                        result += string.Format(" ({0})", soul.Name);
+                    }
+                }
+                //else
+                //{
+                //    // Considering showing (empty) for empty soul traps
+                //}
+            }
+
             return result;
         }
 
@@ -744,9 +762,6 @@ namespace DaggerfallWorkshop.Game.Items
                         return MetalTypes.Iron;
                     case ArmorMaterialTypes.Steel:
                         return MetalTypes.Steel;
-                    case ArmorMaterialTypes.Chain:
-                    case ArmorMaterialTypes.Chain2:
-                        return MetalTypes.Chain;
                     case ArmorMaterialTypes.Silver:
                         return MetalTypes.Silver;
                     case ArmorMaterialTypes.Elven:
@@ -803,8 +818,9 @@ namespace DaggerfallWorkshop.Game.Items
                 case WeaponMaterialTypes.Steel:
                     return DyeColors.Steel;
                 case WeaponMaterialTypes.Silver:
+                    return DyeColors.Silver;
                 case WeaponMaterialTypes.Elven:
-                    return DyeColors.SilverOrElven;
+                    return DyeColors.Elven;
                 case WeaponMaterialTypes.Dwarven:
                     return DyeColors.Dwarven;
                 case WeaponMaterialTypes.Mithril:
@@ -832,16 +848,14 @@ namespace DaggerfallWorkshop.Game.Items
         {
             switch (material)
             {
-                case ArmorMaterialTypes.Chain:
-                case ArmorMaterialTypes.Chain2:
-                    return DyeColors.Chain;
                 case ArmorMaterialTypes.Iron:
                     return DyeColors.Iron;
                 case ArmorMaterialTypes.Steel:
                     return DyeColors.Steel;
                 case ArmorMaterialTypes.Silver:
+                    return DyeColors.Silver;
                 case ArmorMaterialTypes.Elven:
-                    return DyeColors.SilverOrElven;
+                    return DyeColors.Elven;
                 case ArmorMaterialTypes.Dwarven:
                     return DyeColors.Dwarven;
                 case ArmorMaterialTypes.Mithril:

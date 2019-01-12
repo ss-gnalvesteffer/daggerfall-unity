@@ -175,6 +175,7 @@ namespace DaggerfallWorkshop.Game.Entity
         public bool Arrested { get { return arrested; } set { arrested = value; } }
         public bool IsInBeastForm { get; set; }
         public List<string> BackStory { get; set; }
+        public VampireClans PreviousVampireClan { get; set; }
 
         #endregion
 
@@ -275,23 +276,30 @@ namespace DaggerfallWorkshop.Game.Entity
                 gameStarted = true;
             if (playerMotor != null)
             {
+                // UESP describes Athleticism relating to fatigue/stamina as "decreases slower when running, jumping, climbing, and swimming."
+                // https://en.uesp.net/wiki/Daggerfall:ClassMaker#Special_Advantages
+                // In this implementation, players with athleticism will lose fatigue 10% slower, otherwise at normal rate
+                // TODO: Determine actual improvement multiplier to fatigue loss, possibly move to FormulaHelper
+                float fatigueLossMultiplier = (career.Athleticism) ? 0.90f : 1.0f;
+
                 // Apply per-minute events
                 if (lastGameMinutes != gameMinutes)
                 {
                     // Apply fatigue loss to the player
-                    int amount = DefaultFatigueLoss;
+                    int amount = (int)(DefaultFatigueLoss * fatigueLossMultiplier);
                     if (climbingMotor != null && climbingMotor.IsClimbing)
-                        amount = ClimbingFatigueLoss;
+                        amount = (int)(ClimbingFatigueLoss * fatigueLossMultiplier);
                     else if (playerMotor.IsRunning)
-                        amount = RunningFatigueLoss;
+                        amount = (int)(RunningFatigueLoss * fatigueLossMultiplier);
                     else if (GameManager.Instance.PlayerEnterExit.IsPlayerSwimming)
                     {
                         if (Race != Races.Argonian && UnityEngine.Random.Range(1, 100 + 1) > Skills.GetLiveSkillValue(DFCareer.Skills.Swimming))
-                            amount = SwimmingFatigueLoss;
+                            amount = (int)(SwimmingFatigueLoss * fatigueLossMultiplier);
                         TallySkill(DFCareer.Skills.Swimming, 1);
                     }
 
-                    DecreaseFatigue(amount);
+                    if (!isResting)
+                        DecreaseFatigue(amount);
 
                     // Make magically-created items that have expired disappear
                     items.RemoveExpiredItems();
@@ -340,7 +348,7 @@ namespace DaggerfallWorkshop.Game.Entity
                 // Reduce fatigue when jumping and tally jumping skill
                 if (!CheckedCurrentJump && playerMotor.IsJumping)
                 {
-                    DecreaseFatigue(JumpingFatigueLoss);
+                    DecreaseFatigue((int)(JumpingFatigueLoss * fatigueLossMultiplier));
                     TallySkill(DFCareer.Skills.Jumping, 1);
                     CheckedCurrentJump = true;
                 }
@@ -384,16 +392,14 @@ namespace DaggerfallWorkshop.Game.Entity
                 if (((i + lastGameMinutes) % 54720) == 0) // 38 days
                 {
                     RegionPowerAndConditionsUpdate(true);
-                    //StartVampireOrWereCreatureQuest(false);
+                    StartRacialOverrideQuest(false);
                 }
 
-                //if (((i + lastGameMinutes) % 120960) == 0) // 84 days
-                    //StartVampireOrWereCreatureQuest(true);
+                if (((i + lastGameMinutes) % 120960) == 0) // 84 days
+                    StartRacialOverrideQuest(true);
             }
 
-            // TODO: Right now enemy spawns are only prevented when time has been raised for
-            // fast travel. They should later be prevented when time has been raised for
-            // turning into vampire
+            // Enemy spawns are prevented after time is raised for fast travel, jail time, and vampire transformation
             // Classic also prevents enemy spawns during loitering,
             // but this seems counterintuitive so it's not implemented in DF Unity for now
             if (!preventEnemySpawns)
@@ -454,6 +460,13 @@ namespace DaggerfallWorkshop.Game.Entity
             {
                 haveShownSurrenderToGuardsDialogue = false;
             }
+        }
+
+        void StartRacialOverrideQuest(bool isCureQuest)
+        {
+            RacialOverrideEffect racialEffect = GameManager.Instance.PlayerEffectManager.GetRacialOverrideEffect();
+            if (racialEffect != null)
+                racialEffect.StartQuest(isCureQuest);
         }
 
         // Recreation of vampire/werecreature quest starter from classic
@@ -598,23 +611,22 @@ namespace DaggerfallWorkshop.Game.Entity
                             continue;
 
                         Vector3 directionToMobile = populationManager.PopulationPool[i].npc.Motor.transform.position - GameManager.Instance.PlayerMotor.transform.position;
-                        float distance = directionToMobile.magnitude;
-
-                        // Spawn from guard mobile NPCs first
-                        if (populationManager.PopulationPool[i].npc.Billboard.IsUsingGuardTexture)
+                        if (directionToMobile.magnitude <= 77.5f)
                         {
-                            SpawnCityGuard(populationManager.PopulationPool[i].npc.transform.position, populationManager.PopulationPool[i].npc.transform.forward);
-                            populationManager.PopulationPool[i].npc.gameObject.SetActive(false);
-                            // Count those within classic npc range as spawned from NPCs, to mimic classic behavior
-                            if (distance <= 77.5f)
+                            // Spawn from guard mobile NPCs first
+                            if (populationManager.PopulationPool[i].npc.Billboard.IsUsingGuardTexture)
+                            {
+                                SpawnCityGuard(populationManager.PopulationPool[i].npc.transform.position, populationManager.PopulationPool[i].npc.transform.forward);
+                                populationManager.PopulationPool[i].npc.gameObject.SetActive(false);
                                 ++guardsSpawnedFromNPCs;
-                        }
-                        // Next try non-guards
-                        else if (distance <= 77.5f && Vector3.Angle(directionToMobile, GameManager.Instance.PlayerMotor.transform.forward) >= 105.469
-                            && UnityEngine.Random.Range(0, 4) == 0)
-                        {
-                            SpawnCityGuard(populationManager.PopulationPool[i].npc.transform.position, populationManager.PopulationPool[i].npc.transform.forward);
-                            ++guardsSpawnedFromNPCs;
+                            }
+                            // Next try non-guards
+                            else if (Vector3.Angle(directionToMobile, GameManager.Instance.PlayerMotor.transform.forward) >= 105.469
+                                && UnityEngine.Random.Range(0, 4) == 0)
+                            {
+                                SpawnCityGuard(populationManager.PopulationPool[i].npc.transform.position, populationManager.PopulationPool[i].npc.transform.forward);
+                                ++guardsSpawnedFromNPCs;
+                            }
                         }
                     }
 
@@ -681,17 +693,19 @@ namespace DaggerfallWorkshop.Game.Entity
             }
         }
 
-        void SpawnCityGuard(Vector3 position, Vector3 direction)
+        public GameObject SpawnCityGuard(Vector3 position, Vector3 direction)
         {
             GameObject[] cityWatch = GameObjectHelper.CreateFoeGameObjects(position, MobileTypes.Knight_CityWatch, 1);
             if (GameManager.Instance.PlayerEnterExit.IsPlayerInsideBuilding)
                 cityWatch[0].transform.parent = GameManager.Instance.PlayerEnterExit.Interior.transform;
             else if (GameManager.Instance.PlayerGPS.IsPlayerInLocationRect)
                 cityWatch[0].transform.parent = GameManager.Instance.StreamingWorld.CurrentPlayerLocationObject.transform;
-            cityWatch[0].transform.LookAt(direction);
+            cityWatch[0].transform.forward = direction;
             EnemyMotor enemyMotor = cityWatch[0].GetComponent<EnemyMotor>();
             enemyMotor.MakeEnemyHostileToAttacker(GameManager.Instance.PlayerEntityBehaviour);
             cityWatch[0].SetActive(true);
+
+            return cityWatch[0];
         }
 
         void MakeNPCGuardsIntoEnemiesIfGuardsSpawned()
