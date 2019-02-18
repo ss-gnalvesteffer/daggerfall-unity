@@ -289,8 +289,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
                 return;
             }
 
-            DaggerfallListPickerWindow advantagePicker = new DaggerfallListPickerWindow(uiManager, this);
-            advantagePicker.ListBox.Font = DaggerfallUI.SmallFont;
+            DaggerfallListPickerWindow advantagePicker = new DaggerfallListPickerWindow(uiManager, this, DaggerfallUI.SmallFont, 12);
             advantagePicker.OnItemPicked += AdvantagePicker_OnItemPicked;
 
             items = isDisadvantages ? disadvantageStrings : advantageStrings;
@@ -393,8 +392,7 @@ namespace DaggerfallWorkshop.Game.UserInterfaceWindows
             } 
             else
             {
-                DaggerfallListPickerWindow secondaryPicker = new DaggerfallListPickerWindow(uiManager, this);
-                secondaryPicker.ListBox.Font = DaggerfallUI.SmallFont;
+                DaggerfallListPickerWindow secondaryPicker = new DaggerfallListPickerWindow(uiManager, this, DaggerfallUI.SmallFont, 12);
                 secondaryPicker.OnItemPicked += SecondaryPicker_OnItemPicked;
                 secondaryPicker.OnCancel += SecondaryPicker_OnCancel;
                 foreach (string secondaryString in secondaryList)
