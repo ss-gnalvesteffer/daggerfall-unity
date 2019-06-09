@@ -14,6 +14,7 @@
 
 using UnityEngine;
 using System;
+using Random = System.Random;
 using System.Collections;
 using System.Collections.Generic;
 using DaggerfallConnect;
@@ -1414,13 +1415,14 @@ namespace DaggerfallWorkshop
             int mapHeight,
             bool useNearestStartMarker = false)
         {
-            UnityEngine.Random.InitState(DateTime.Now.Millisecond);
+            Random rand = new Random();
+            // UnityEngine.Random.InitState(rand.Next());
 
             int side;
             if (travelStartX == null || travelStartZ == null)
             {
                 // Randomly pick one side of location to spawn
-                side = UnityEngine.Random.Range(0, 4);
+                side = rand.Next(0, 4);
             }
             else
             {
@@ -1429,14 +1431,14 @@ namespace DaggerfallWorkshop
                 int worldDeltaZ = LocalPlayerGPS.WorldZ - (int)travelStartZ;
 
                 if (worldDeltaX == 0 && worldDeltaZ == 0)
-                    side = UnityEngine.Random.Range(0, 4);
+                    side = rand.Next(0, 4);
                 else
                 {
                     int px = Math.Abs(worldDeltaX);
                     int pz = Math.Abs(worldDeltaZ);
                     // if travel start is distant enough, chances of hitting square sides are
                     // approximatively px/(px+pz) and pz/(px+pz)
-                    int random = UnityEngine.Random.Range(0, px + pz);
+                    int random = rand.Next(0, px + pz);
                     if (px > pz)
                     {
                         // direction is mainly E-W, do we hit square front side?

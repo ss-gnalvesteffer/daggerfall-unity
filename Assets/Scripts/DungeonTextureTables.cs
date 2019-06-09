@@ -9,7 +9,7 @@
 // Notes:
 //
 
-using UnityEngine;
+using System;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
 
@@ -74,18 +74,17 @@ namespace DaggerfallWorkshop
                 319, 320, 322, 323, 324, 368,
                 419, 420, 422, 423, 424, 468,
             };
-
-            Random.InitState(seed);
+            Random rand = new Random(seed);
             int[] textureTable = new int[TableLength];
             for (int i = 0; i < TableLength; i++)
             {
-                textureTable[i] = valids[Random.Range(0, valids.Length)];
+                textureTable[i] = valids[rand.Next(0, valids.Length)];
             }
 
             // Make sure sewer textures are used for last slot, or errors can occur because sewer archives have more records than the others
             int[] validSewerArchives = { 68, 168, 368, 468 };
             if ((textureTable[5] % 100) != 68)
-                textureTable[5] = validSewerArchives[Random.Range(0, validSewerArchives.Length)];
+                textureTable[5] = validSewerArchives[rand.Next(0, validSewerArchives.Length)];
 
             return textureTable;
         }

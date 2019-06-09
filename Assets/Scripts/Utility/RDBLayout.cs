@@ -9,17 +9,14 @@
 // Notes:
 //
 
-using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System;
-using System.IO;
+using UnityEngine;
+using Random = System.Random;
 using DaggerfallConnect;
-using DaggerfallConnect.Utility;
 using DaggerfallConnect.Arena2;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Serialization;
-using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Utility.AssetInjection;
 using DaggerfallWorkshop.Game.Questing;
 using DaggerfallWorkshop.Game.Items;
@@ -294,6 +291,7 @@ namespace DaggerfallWorkshop.Utility
         /// Add all block flats.
         /// </summary>
         public static void AddFlats(
+            Random rand,
             GameObject go,
             Dictionary<int, ActionLink> actionLinkDict,
             ref DFBlock blockData,
@@ -372,7 +370,7 @@ namespace DaggerfallWorkshop.Utility
                                 meshRenderer.enabled = false;
 
                             // Assign fixed treaure to this marker
-                            AssignFixedTreasure(flatObject, obj, ref blockData, dungeonType);
+                            AssignFixedTreasure(rand, flatObject, obj, ref blockData, dungeonType);
                         }
 
                         //add action component to flat if it has an action
@@ -391,6 +389,7 @@ namespace DaggerfallWorkshop.Utility
         }
 
         public static void AddTreasure(
+            Random rand,
             GameObject go,
             DFBlock.RdbObject[] editorObjects,
             ref DFBlock blockData,
@@ -416,11 +415,12 @@ namespace DaggerfallWorkshop.Utility
             {
                 // Add treasure flat
                 if (editorObjects[i].Resources.FlatResource.TextureRecord == randomTreasureFlatIndex)
-                    AddRandomTreasure(editorObjects[i], randomTreasureNode.transform, ref blockData, dungeonType, serialize);
+                    AddRandomTreasure(rand, editorObjects[i], randomTreasureNode.transform, ref blockData, dungeonType, serialize);
             }
         }
 
         public static void AssignFixedTreasure(
+            Random rand,
             GameObject parent,
             DFBlock.RdbObject obj,
             ref DFBlock blockData,
@@ -430,7 +430,7 @@ namespace DaggerfallWorkshop.Utility
             // Add fixed treasure flat with same archive & record and use exact position
             int archive = obj.Resources.FlatResource.TextureArchive;
             int record = obj.Resources.FlatResource.TextureRecord;
-            AddRandomTreasure(obj, parent.transform, ref blockData, dungeonType, serialize, archive, record, false);
+            AddRandomTreasure(rand, obj, parent.transform, ref blockData, dungeonType, serialize, archive, record, false);
         }
 
         /// <summary>
@@ -513,7 +513,7 @@ namespace DaggerfallWorkshop.Utility
             randomEnemiesNode.transform.parent = go.transform;
 
             // Seed random generator
-            UnityEngine.Random.InitState(seed);
+            Random rand = new Random(seed);
 
             bool alternateRandomEnemySelection = DaggerfallUnity.Settings.AlternateRandomEnemySelection;
 
@@ -534,7 +534,7 @@ namespace DaggerfallWorkshop.Utility
                 {
                     // Add random enemy objects
                     if (editorObjects[i].Resources.FlatResource.TextureRecord == randomMonsterFlatIndex)
-                        AddRandomRDBEnemyClassic(editorObjects[i], dungeonType, monsterPower, monsterVariance, randomEnemiesNode.transform, ref blockData, startMarkers, serialize, DungeonWaterEnemiesToPlace, DungeonNonWaterEnemiesToPlace);
+                        AddRandomRDBEnemyClassic(rand, editorObjects[i], dungeonType, monsterPower, monsterVariance, randomEnemiesNode.transform, ref blockData, startMarkers, serialize, DungeonWaterEnemiesToPlace, DungeonNonWaterEnemiesToPlace);
                 }
             }
             else // Alternate enemy selection (more randomized)
@@ -544,7 +544,7 @@ namespace DaggerfallWorkshop.Utility
                 {
                     // Add random enemy objects
                     if (editorObjects[i].Resources.FlatResource.TextureRecord == randomMonsterFlatIndex)
-                        AddRandomRDBEnemy(editorObjects[i], dungeonType, monsterPower, monsterVariance, randomEnemiesNode.transform, ref blockData, startMarkers, serialize);
+                        AddRandomRDBEnemy(rand, editorObjects[i], dungeonType, monsterPower, monsterVariance, randomEnemiesNode.transform, ref blockData, startMarkers, serialize);
                 }
             }
         }
@@ -1281,6 +1281,7 @@ namespace DaggerfallWorkshop.Utility
         }
 
         private static void AddRandomRDBEnemy(
+            Random rand,
             DFBlock.RdbObject obj,
             DFRegion.DungeonTypes dungeonType,
             float monsterPower,
@@ -1336,7 +1337,7 @@ namespace DaggerfallWorkshop.Utility
                     maxMonsterIndex = table.Enemies.Length - 1;
 
                 // Get random monster from table
-                MobileTypes type = table.Enemies[UnityEngine.Random.Range(minMonsterIndex, maxMonsterIndex + 1)];
+                MobileTypes type = table.Enemies[rand.Next(minMonsterIndex, maxMonsterIndex + 1)];
 
                 // Create unique LoadID for save sytem
                 ulong loadID = 0;
@@ -1355,6 +1356,7 @@ namespace DaggerfallWorkshop.Utility
         }
 
         private static void AddRandomRDBEnemyClassic(
+            System.Random r,
             DFBlock.RdbObject obj,
             DFRegion.DungeonTypes dungeonType,
             float monsterPower,
@@ -1395,7 +1397,7 @@ namespace DaggerfallWorkshop.Utility
 
                 int slot = obj.Resources.FlatResource.Flags;
                 if (slot == 0)
-                    slot = UnityEngine.Random.Range(1, 7);
+                    slot = r.Next(1, 7);
 
                 MobileTypes type;
                 if (usingWaterEnemies)
@@ -1536,6 +1538,7 @@ namespace DaggerfallWorkshop.Utility
         }
 
         private static DaggerfallLoot AddRandomTreasure(
+            Random rand,
             DFBlock.RdbObject obj,
             Transform parent,
             ref DFBlock blockData,
@@ -1551,7 +1554,7 @@ namespace DaggerfallWorkshop.Utility
                 loadID = (ulong)(blockData.Position + obj.Position);
 
             // Randomise container texture
-            int iconIndex = UnityEngine.Random.Range(0, DaggerfallLootDataTables.randomTreasureIconIndices.Length);
+            int iconIndex = rand.Next(0, DaggerfallLootDataTables.randomTreasureIconIndices.Length);
             int iconRecord = DaggerfallLootDataTables.randomTreasureIconIndices[iconIndex];
 
             // Find bottom of marker in world space

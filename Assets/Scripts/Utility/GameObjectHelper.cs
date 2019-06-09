@@ -13,6 +13,7 @@
 
 using UnityEngine;
 using System;
+using Random = System.Random;
 using System.Collections.Generic;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
@@ -514,6 +515,7 @@ namespace DaggerfallWorkshop.Utility
         /// <param name="cloneFrom">Clone and build on a prefab object template.</param>
         /// <param name="importEnemies">Import enemies from game data.</param>
         public static GameObject CreateRDBBlockGameObject(
+            Random rand,
             string blockName,
             int[] textureTable = null,
             bool allowExitDoors = true,
@@ -544,7 +546,7 @@ namespace DaggerfallWorkshop.Utility
             DFBlock.RdbObject[] editorObjects;
             GameObject[] startMarkers;
             GameObject[] enterMarkers;
-            RDBLayout.AddFlats(go, actionLinkDict, ref blockData, out editorObjects, out startMarkers, out enterMarkers, dungeonType);
+            RDBLayout.AddFlats(rand, go, actionLinkDict, ref blockData, out editorObjects, out startMarkers, out enterMarkers, dungeonType);
 
             // Set start and enter markers
             DaggerfallRDBBlock dfBlock = go.GetComponent<DaggerfallRDBBlock>();
@@ -552,7 +554,7 @@ namespace DaggerfallWorkshop.Utility
                 dfBlock.SetMarkers(startMarkers, enterMarkers);
 
             // Add treasure
-            RDBLayout.AddTreasure(go, editorObjects, ref blockData, dungeonType);
+            RDBLayout.AddTreasure(rand, go, editorObjects, ref blockData, dungeonType);
 
             // Add enemies
             if (importEnemies)
@@ -1309,17 +1311,17 @@ namespace DaggerfallWorkshop.Utility
             return go;
         }
 
-        public static GameObject CreateDaggerfallDungeonGameObject(string multiName, Transform parent)
+        public static GameObject CreateDaggerfallDungeonGameObject(Random rand, string multiName, Transform parent)
         {
             // Get dungeon
             DFLocation location;
             if (!FindMultiNameLocation(multiName, out location))
                 return null;
 
-            return CreateDaggerfallDungeonGameObject(location, parent);
+            return CreateDaggerfallDungeonGameObject(rand, location, parent);
         }
 
-        public static GameObject CreateDaggerfallDungeonGameObject(DFLocation location, Transform parent, bool importEnemies = true)
+        public static GameObject CreateDaggerfallDungeonGameObject(Random rand, DFLocation location, Transform parent, bool importEnemies = true)
         {
             if (!location.HasDungeon)
             {
@@ -1331,7 +1333,7 @@ namespace DaggerfallWorkshop.Utility
             GameObject go = new GameObject(DaggerfallDungeon.GetSceneName(location));
             if (parent) go.transform.parent = parent;
             DaggerfallDungeon c = go.AddComponent<DaggerfallDungeon>();
-            c.SetDungeon(location, importEnemies);
+            c.SetDungeon(rand, location, importEnemies);
 
             return go;
         }

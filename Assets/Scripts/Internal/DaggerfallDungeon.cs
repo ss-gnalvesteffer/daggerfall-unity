@@ -13,12 +13,9 @@
 
 using UnityEngine;
 using System;
-using System.Collections;
+using Random = System.Random;
 using System.Collections.Generic;
-using System.IO;
 using DaggerfallConnect;
-using DaggerfallConnect.Arena2;
-using DaggerfallConnect.Utility;
 using DaggerfallWorkshop.Utility;
 using DaggerfallWorkshop.Game;
 
@@ -82,7 +79,7 @@ namespace DaggerfallWorkshop
             public DFRegion.DungeonTypes DungeonType;
         }
 
-        public void SetDungeon(DFLocation location, bool importEnemies = true)
+        public void SetDungeon(Random rand, DFLocation location, bool importEnemies = true)
         {
             if (!ReadyCheck())
                 return;
@@ -111,9 +108,9 @@ namespace DaggerfallWorkshop
             // Perform layout
             startMarker = null;
             if (location.Name == "Orsinium")
-                LayoutOrsinium(ref location, importEnemies);
+                LayoutOrsinium(rand, ref location, importEnemies);
             else
-                LayoutDungeon(ref location, importEnemies);
+                LayoutDungeon(rand, ref location, importEnemies);
 
             // Seal location
             isSet = true;
@@ -248,7 +245,7 @@ namespace DaggerfallWorkshop
 
         #region Private Methods
 
-        private void LayoutDungeon(ref DFLocation location, bool importEnemies = true)
+        private void LayoutDungeon(Random rand, ref DFLocation location, bool importEnemies = true)
         {
 #if SHOW_LAYOUT_TIMES
             // Start timing
@@ -269,6 +266,7 @@ namespace DaggerfallWorkshop
             {
                 DFLocation.DungeonBlock block = summary.LocationData.Dungeon.Blocks[i];
                 GameObject go = GameObjectHelper.CreateRDBBlockGameObject(
+                    rand,
                     block.BlockName,
                     DungeonTextureTable,
                     block.IsStartingBlock,
@@ -304,7 +302,7 @@ namespace DaggerfallWorkshop
         }
 
         // Orsinium defines two blocks at [-1,-1]
-        private void LayoutOrsinium(ref DFLocation location, bool importEnemies = true)
+        private void LayoutOrsinium(Random rand, ref DFLocation location, bool importEnemies = true)
         {
             // Calculate monster power - this is a clamped 0-1 value based on player's level from 1-20
             float monsterPower = Mathf.Clamp01(GameManager.Instance.PlayerEntity.Level / 20f);
@@ -317,6 +315,7 @@ namespace DaggerfallWorkshop
                     continue;
 
                 GameObject go = GameObjectHelper.CreateRDBBlockGameObject(
+                    rand,
                     block.BlockName,
                     DungeonTextureTable,
                     block.IsStartingBlock,

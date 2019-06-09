@@ -18,7 +18,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Random = UnityEngine.Random;
+using Random = System.Random;
 using DaggerfallConnect.Arena2;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
@@ -33,8 +33,9 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
     {
         #region Fields
 
-        static Func<float> getTreeScaleCallback = () => Random.Range(0.6f, 1.4f);
-        static Func<Color32> getTreeColorCallback = () => Color.Lerp(Color.white, Color.grey, Random.value);
+        static Random rand = new Random();
+        static Func<float> getTreeScaleCallback = () => rand.Range(0.6f, 1.4f);
+        static Func<Color32> getTreeColorCallback = () => Color.Lerp(Color.white, Color.grey, rand.NextFloat());
         static Action<Terrain> setTreesSettingsCallback = SetTreesSettings;
 
         static HashSet<Vector2Int> triedBillboards = new HashSet<Vector2Int>();
@@ -117,8 +118,8 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
             var iObjectPositioner = go.GetComponent<IObjectPositioner>();
             if (iObjectPositioner == null || iObjectPositioner.AllowFlatRotation)
             {
-                Random.InitState((int)position.x);
-                go.transform.Rotate(0, Random.Range(0f, 360f), 0);
+                Random r = new Random((int)position.x);
+                go.transform.Rotate(0, r.Range(0f, 360f), 0);
             }
 
             // Add NPC trigger collider
@@ -170,7 +171,7 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
         /// <param name="x">X coordinate on terrain.</param>
         /// <param name="y">Y coordinate on terrain.</param>
         /// <returns>True if gameobject is found and imported.</returns>
-        public static bool ImportNatureGameObject(int archive, int record, Terrain terrain, int x, int y)
+        public static bool ImportNatureGameObject(Random rand, int archive, int record, Terrain terrain, int x, int y)
         {
             const int tilemapDim = MapsFile.WorldMapTileDim - 1;
 
@@ -182,7 +183,7 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
             Vector3 position = new Vector3(x / (float)tilemapDim, 0.0f, y / (float)tilemapDim);
             float scale = getTreeScaleCallback();
             Color32 color = getTreeColorCallback();
-            float rotation = Random.Range(0f, 360f);
+            float rotation = rand.Range(0f, 360f);
             int index = GetTreePrototypeIndex(terrain.terrainData, prefab);
 
             // Add tree instance

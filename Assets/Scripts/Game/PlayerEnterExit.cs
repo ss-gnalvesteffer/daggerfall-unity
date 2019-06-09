@@ -11,6 +11,7 @@
 
 using UnityEngine;
 using System;
+using Random = System.Random;
 using System.Collections;
 using System.Collections.Generic;
 using DaggerfallWorkshop.Utility;
@@ -847,7 +848,8 @@ namespace DaggerfallWorkshop.Game
             RaiseOnPreTransitionEvent(TransitionType.ToDungeonInterior, door);
 
             // Layout dungeon
-            GameObject newDungeon = GameObjectHelper.CreateDaggerfallDungeonGameObject(location, DungeonParent.transform);
+            Random rand = new Random();
+            GameObject newDungeon = GameObjectHelper.CreateDaggerfallDungeonGameObject(rand, location, DungeonParent.transform);
             newDungeon.hideFlags = defaultHideFlags;
             dungeon = newDungeon.GetComponent<DaggerfallDungeon>();
 
@@ -906,7 +908,8 @@ namespace DaggerfallWorkshop.Game
             RaiseOnPreTransitionEvent(TransitionType.ToDungeonInterior);
 
             // Layout dungeon
-            GameObject newDungeon = GameObjectHelper.CreateDaggerfallDungeonGameObject(location, DungeonParent.transform, importEnemies);
+            Random rand = new Random();
+            GameObject newDungeon = GameObjectHelper.CreateDaggerfallDungeonGameObject(rand, location, DungeonParent.transform, importEnemies);
             newDungeon.hideFlags = defaultHideFlags;
             dungeon = newDungeon.GetComponent<DaggerfallDungeon>();
 

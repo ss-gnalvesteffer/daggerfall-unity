@@ -9,7 +9,9 @@
 // Notes:
 //
 
+using System;
 using UnityEngine;
+using Random = System.Random;
 using DaggerfallConnect;
 using DaggerfallConnect.Arena2;
 using DaggerfallConnect.Utility;
@@ -513,7 +515,7 @@ namespace DaggerfallWorkshop
             MeshReplacement.ClearNatureGameObjects(terrain);
 
             // Seed random with terrain key
-            Random.InitState(MakeTerrainKey(dfTerrain.MapPixelX, dfTerrain.MapPixelY));
+            Random rand = new Random(MakeTerrainKey(dfTerrain.MapPixelX, dfTerrain.MapPixelY));
 
             // Just layout some random flats spread evenly across entire map pixel area
             // Flats are aligned with tiles, max 16129 billboards per batch
@@ -543,17 +545,17 @@ namespace DaggerfallWorkshop
                     int tile = dfTerrain.MapData.tilemapSamples[x, y] & 0x3F;
                     if (tile == 1)
                     {   // Dirt
-                        if (UnityEngine.Random.Range(0f, 1f) > chanceOnDirt)
+                        if (rand.Range(0f, 1f) > chanceOnDirt)
                             continue;
                     }
                     else if (tile == 2)
                     {   // Grass
-                        if (UnityEngine.Random.Range(0f, 1f) > chanceOnGrass)
+                        if (rand.Range(0f, 1f) > chanceOnGrass)
                             continue;
                     }
                     else if (tile == 3)
                     {   // Stone
-                        if (UnityEngine.Random.Range(0f, 1f) > chanceOnStone)
+                        if (rand.Range(0f, 1f) > chanceOnStone)
                             continue;
                     }
                     else
@@ -575,8 +577,8 @@ namespace DaggerfallWorkshop
                     pos.y = height2;
 
                     // Add to batch
-                    int record = UnityEngine.Random.Range(1, 32);
-                    if (!MeshReplacement.ImportNatureGameObject(dfBillboardBatch.TextureArchive, record, terrain, x, y))
+                    int record = rand.Next(1, 32);
+                    if (!MeshReplacement.ImportNatureGameObject(rand, dfBillboardBatch.TextureArchive, record, terrain, x, y))
                         dfBillboardBatch.AddItem(record, pos);
                 }
             }

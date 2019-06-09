@@ -12,12 +12,8 @@
 using UnityEngine;
 using UnityEditor;
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using Random = System.Random;
 using DaggerfallConnect;
-using DaggerfallConnect.Arena2;
-using DaggerfallConnect.InternalTypes;
-using DaggerfallConnect.Utility;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Utility;
 
@@ -287,6 +283,7 @@ namespace DaggerfallWorkshop
             if (!dfUnity.gameObject.activeInHierarchy)
                 return;
 
+            Random rand = new Random();
             EditorGUILayout.Space();
             ShowImportFoldout = GUILayoutHelper.Foldout(ShowImportFoldout, new GUIContent("Importer"), () =>
             {
@@ -320,6 +317,7 @@ namespace DaggerfallWorkshop
                             else if (propBlockName.stringValue.EndsWith(".RDB"))
                             {
                                 GameObjectHelper.CreateRDBBlockGameObject(
+                                    rand,
                                     propBlockName.stringValue,
                                     null,
                                     true,
@@ -352,7 +350,7 @@ namespace DaggerfallWorkshop
                         propDungeonName.stringValue = EditorGUILayout.TextField(propDungeonName.stringValue.Trim());
                         if (GUILayout.Button("Import"))
                         {
-                            GameObjectHelper.CreateDaggerfallDungeonGameObject(propDungeonName.stringValue, null);
+                            GameObjectHelper.CreateDaggerfallDungeonGameObject(rand, propDungeonName.stringValue, null);
                         }
                     });
                 });
