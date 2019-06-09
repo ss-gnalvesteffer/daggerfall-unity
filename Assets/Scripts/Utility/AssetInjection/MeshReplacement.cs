@@ -117,8 +117,10 @@ namespace DaggerfallWorkshop.Utility.AssetInjection
             var iObjectPositioner = go.GetComponent<IObjectPositioner>();
             if (iObjectPositioner == null || iObjectPositioner.AllowFlatRotation)
             {
+                Random.State oldState = Random.state;
                 Random.InitState((int)position.x);
                 go.transform.Rotate(0, Random.Range(0f, 360f), 0);
+                Random.state = oldState;
             }
 
             // Add NPC trigger collider
