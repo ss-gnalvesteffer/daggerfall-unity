@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class NPCHealthIndicator : MonoBehaviour
 {
+    private const float IndicatorMargin = 0.1f;
+
     private DaggerfallEntityBehaviour _entityBehaviour;
     private TextMeshPro _textMeshPro;
 
@@ -16,7 +18,7 @@ public class NPCHealthIndicator : MonoBehaviour
     private void Update()
     {
         UpdateHealthText();
-        UpdateRotation();
+        UpdateTransform();
     }
 
     private void UpdateHealthText()
@@ -29,8 +31,13 @@ public class NPCHealthIndicator : MonoBehaviour
         );
     }
 
-    private void UpdateRotation()
+    private void UpdateTransform()
     {
-        transform.rotation = Camera.main.transform.rotation;
+        var camera = Camera.main;
+        var billboardHeight = transform.parent.Find("MobileUnitBillboard").transform.localScale.y;
+        transform.position =
+            (transform.parent.position - ((transform.parent.position - camera.transform.position).normalized * 0.1f)) +
+            new Vector3(0, billboardHeight / 2 + IndicatorMargin, 0);
+        transform.rotation = camera.transform.rotation;
     }
 }
