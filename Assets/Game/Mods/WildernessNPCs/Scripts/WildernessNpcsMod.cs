@@ -9,9 +9,9 @@ using UnityEngine;
 
 public class WildernessNpcsMod : MonoBehaviour
 {
-    private const int MaxSpawnGroups = 10;
-    private const float SpawnMinDistance = 50.0f;
-    private const float SpawnMaxDistance = 300.0f;
+    private const int MaxSpawnGroups = 15;
+    private const float SpawnMinDistance = 75.0f;
+    private const float SpawnMaxDistance = 200.0f;
     private const float SpawnCheckDistance = 100.0f;
     private const float MinimumUpdateIntervalInSeconds = 10.0f;
     private const float MaximumUpdateIntervalInSeconds = 60.0f;
@@ -102,7 +102,8 @@ public class WildernessNpcsMod : MonoBehaviour
             var deltaDistance = (currentPosition - _previousPosition).magnitude;
             if (deltaDistance >= SpawnCheckDistance && IsPlayerInWilderness())
             {
-                for (var spawnGroupIndex = 0; spawnGroupIndex < Random.Range(1, MaxSpawnGroups); ++spawnGroupIndex)
+                var numberOfGroupsToSpawn = Random.Range(1, MaxSpawnGroups);
+                for (var spawnGroupIndex = 0; spawnGroupIndex < numberOfGroupsToSpawn; ++spawnGroupIndex)
                 {
                     var mobileTypeToSpawn = SpawnableMobileTypes[Random.Range(0, SpawnableMobileTypes.Length)];
                     var isMobileTypeAnAlly = MobileTypeAlliances[mobileTypeToSpawn];
