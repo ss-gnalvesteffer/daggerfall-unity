@@ -1,6 +1,6 @@
 {
     "ModTitle": "NPCHealthIndicators",
-    "ModVersion": "1.0",
+    "ModVersion": "1.0.1",
     "ModAuthor": "Xorberax",
     "ContactInfo": null,
     "DFUnity_Version": "0.10.17",
@@ -9,7 +9,8 @@
     "Files": [
         "Assets/Game/Mods/NPCHealthIndicators/Scripts/HealthIndicatorMod.cs",
         "Assets/Game/Mods/NPCHealthIndicators/Scripts/NPCHealthIndicator.cs",
-        "Assets/Game/Mods/NPCHealthIndicators/Assets/NPCHealthIndicator.prefab"
+        "Assets/Game/Mods/NPCHealthIndicators/Assets/NPCHealthIndicator.prefab",
+        "Assets/Game/Mods/NPCHealthIndicators/NPCHealthIndicators.dfmod.json"
     ],
     "Contributes": null,
     "Dependencies": null
