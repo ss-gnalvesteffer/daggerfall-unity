@@ -1,0 +1,15 @@
+{
+    "ModTitle": "WildernessNPCs",
+    "ModVersion": "1.0.0",
+    "ModAuthor": "Xorberax",
+    "ContactInfo": null,
+    "DFUnity_Version": "0.10.17",
+    "ModDescription": "Adds NPCs to the wilderness",
+    "GUID": "becda903-4cb1-4834-8ce0-ad1bc4f51a51",
+    "Files": [
+        "Assets/Game/Mods/WildernessNPCs/WildernessNPCs.dfmod.json",
+        "Assets/Game/Mods/WildernessNPCs/Scripts/WildernessNpcsMod.cs"
+    ],
+    "Contributes": null,
+    "Dependencies": null
+}
