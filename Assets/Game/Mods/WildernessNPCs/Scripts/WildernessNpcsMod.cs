@@ -11,7 +11,7 @@ public class WildernessNpcsMod : MonoBehaviour
 {
     private const int MaxSpawnGroups = 10;
     private const float SpawnMinDistance = 50.0f;
-    private const float SpawnMaxDistance = 200.0f;
+    private const float SpawnMaxDistance = 300.0f;
     private const float SpawnCheckDistance = 100.0f;
     private const float MinimumUpdateIntervalInSeconds = 10.0f;
     private const float MaximumUpdateIntervalInSeconds = 60.0f;
@@ -102,7 +102,7 @@ public class WildernessNpcsMod : MonoBehaviour
             var deltaDistance = (currentPosition - _previousPosition).magnitude;
             if (deltaDistance >= SpawnCheckDistance && IsPlayerInWilderness())
             {
-                for (var spawnGroupIndex = 0; spawnGroupIndex < Random.Range(0, MaxSpawnGroups); ++spawnGroupIndex)
+                for (var spawnGroupIndex = 0; spawnGroupIndex < Random.Range(1, MaxSpawnGroups); ++spawnGroupIndex)
                 {
                     var mobileTypeToSpawn = SpawnableMobileTypes[Random.Range(0, SpawnableMobileTypes.Length)];
                     var isMobileTypeAnAlly = MobileTypeAlliances[mobileTypeToSpawn];
@@ -112,6 +112,7 @@ public class WildernessNpcsMod : MonoBehaviour
                     spawnerGameObject.transform.parent = _gameObject.transform;
                     spawnerGameObject.transform.position = GameManager.Instance.PlayerObject.transform.position;
                     var foeSpawner = spawnerGameObject.AddComponent<FoeSpawner>();
+                    foeSpawner.LineOfSightCheck = false;
                     foeSpawner.FoeType = mobileTypeToSpawn;
                     foeSpawner.AlliedToPlayer = isMobileTypeAnAlly;
                     foeSpawner.MinDistance = SpawnMinDistance;
