@@ -9,49 +9,64 @@ using UnityEngine;
 
 public class WildernessNpcsMod : MonoBehaviour
 {
-    private const int MaxSpawnGroups = 5;
-    private const float SpawnMinDistance = 20.0f;
-    private const float SpawnMaxDistance = 150.0f;
-    private const float SpawnCheckDistance = 50.0f;
-    private const float MinimumUpdateIntervalInSeconds = 30.0f;
-    private const float MaximumUpdateIntervalInSeconds = 60.0f * 5;
+    private const int MaxSpawnGroups = 10;
+    private const float SpawnMinDistance = 50.0f;
+    private const float SpawnMaxDistance = 200.0f;
+    private const float SpawnCheckDistance = 100.0f;
+    private const float MinimumUpdateIntervalInSeconds = 10.0f;
+    private const float MaximumUpdateIntervalInSeconds = 60.0f;
 
     private static readonly MobileTypes[] SpawnableMobileTypes =
     {
+        MobileTypes.Rogue,
         MobileTypes.Thief,
         MobileTypes.GiantBat,
         MobileTypes.Orc,
+        MobileTypes.OrcShaman,
+        MobileTypes.Battlemage,
+        MobileTypes.Centaur,
         MobileTypes.GrizzlyBear,
         MobileTypes.Spider,
         MobileTypes.Rat,
         MobileTypes.SkeletalWarrior,
         MobileTypes.Knight,
+        MobileTypes.Archer,
         MobileTypes.Healer,
     };
 
     private static readonly Dictionary<MobileTypes, bool> MobileTypeAlliances = new Dictionary<MobileTypes, bool>
     {
+        { MobileTypes.Rogue, false },
         { MobileTypes.Thief, false },
         { MobileTypes.GiantBat, false },
         { MobileTypes.Orc, false },
+        { MobileTypes.OrcShaman, false },
+        { MobileTypes.Battlemage, false },
+        { MobileTypes.Centaur, false },
         { MobileTypes.GrizzlyBear, false },
         { MobileTypes.Spider, false },
         { MobileTypes.Rat, false },
         { MobileTypes.SkeletalWarrior, false },
         { MobileTypes.Knight, true },
+        { MobileTypes.Archer, true },
         { MobileTypes.Healer, true },
     };
 
     private static readonly Dictionary<MobileTypes, int> MobileTypeMaxSpawnCounts = new Dictionary<MobileTypes, int>
     {
+        { MobileTypes.Rogue, 10 },
         { MobileTypes.Thief, 5 },
-        { MobileTypes.GiantBat, 5 },
-        { MobileTypes.Orc, 5 },
+        { MobileTypes.GiantBat, 10 },
+        { MobileTypes.Orc, 10 },
+        { MobileTypes.OrcShaman, 5 },
+        { MobileTypes.Battlemage, 5 },
+        { MobileTypes.Centaur, 10 },
         { MobileTypes.GrizzlyBear, 3 },
-        { MobileTypes.Spider, 3 },
-        { MobileTypes.Rat, 10 },
+        { MobileTypes.Spider, 5 },
+        { MobileTypes.Rat, 20 },
         { MobileTypes.SkeletalWarrior, 5 },
-        { MobileTypes.Knight, 10 },
+        { MobileTypes.Knight, 20 },
+        { MobileTypes.Archer, 20 },
         { MobileTypes.Healer, 10 },
     };
 
