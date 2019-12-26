@@ -34,7 +34,8 @@ public class NPCHealthIndicator : MonoBehaviour
     private void UpdateTransform()
     {
         var camera = Camera.main;
-        var billboardHeight = transform.parent.Find("MobileUnitBillboard").transform.localScale.y;
+        var billboard = transform.parent.Find("MobileUnitBillboard") ?? transform.parent.Find("MobilePersonBillboard");
+        var billboardHeight = billboard != null ? billboard.transform.localScale.y : 1.0f;
         transform.position =
             (transform.parent.position - ((transform.parent.position - camera.transform.position).normalized * 0.1f)) +
             new Vector3(0, billboardHeight / 2 + IndicatorMargin, 0);
