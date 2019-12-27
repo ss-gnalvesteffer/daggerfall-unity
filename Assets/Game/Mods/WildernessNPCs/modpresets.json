@@ -1,0 +1,36 @@
+[
+  {
+    "$version": "v1"
+    "Title": "Tame Wilderness",
+    "Author": "Xorberax",
+    "Description": "Spawns few NPC groups.",
+    "SettingsVersion": "1.1.0",
+    "Values": {
+      "Spawning": {
+        "MaximumSpawnGroups": "3",
+        "MinimumSpawnDistance": "100",
+        "MaximumSpawnDistance": "200",
+        "SpawnCheckDistance": "150",
+        "MinimumUpdateIntervalInSeconds": "30",
+        "MaximumUpdateIntervalInSeconds": "60",
+      }
+    },
+  },
+  {
+    "$version": "v1"
+    "Title": "Hostile Wilderness",
+    "Author": "Xorberax",
+    "Description": "Spawns many NPC groups.",
+    "SettingsVersion": "1.1.0",
+    "Values": {
+      "Spawning": {
+        "MaximumSpawnGroups": "15",
+        "MinimumSpawnDistance": "50",
+        "MaximumSpawnDistance": "250",
+        "SpawnCheckDistance": "100",
+        "MinimumUpdateIntervalInSeconds": "10",
+        "MaximumUpdateIntervalInSeconds": "60",
+      }
+    },
+  }
+]

@@ -5,17 +5,11 @@ using DaggerfallWorkshop;
 using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Utility;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
+using DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings;
 using UnityEngine;
 
-public class WildernessNpcsMod : MonoBehaviour
+public class WildernessNPCs : MonoBehaviour
 {
-    private const int MaxSpawnGroups = 15;
-    private const float SpawnMinDistance = 75.0f;
-    private const float SpawnMaxDistance = 200.0f;
-    private const float SpawnCheckDistance = 100.0f;
-    private const float MinimumUpdateIntervalInSeconds = 10.0f;
-    private const float MaximumUpdateIntervalInSeconds = 60.0f;
-
     private static readonly MobileTypes[] SpawnableMobileTypes =
     {
         MobileTypes.Rogue,
@@ -29,8 +23,8 @@ public class WildernessNpcsMod : MonoBehaviour
         MobileTypes.Spider,
         MobileTypes.Rat,
         MobileTypes.SkeletalWarrior,
-        MobileTypes.Knight,
         MobileTypes.Archer,
+        MobileTypes.Knight,
         MobileTypes.Healer,
     };
 
@@ -47,8 +41,8 @@ public class WildernessNpcsMod : MonoBehaviour
         { MobileTypes.Spider, false },
         { MobileTypes.Rat, false },
         { MobileTypes.SkeletalWarrior, false },
+        { MobileTypes.Archer, false },
         { MobileTypes.Knight, true },
-        { MobileTypes.Archer, true },
         { MobileTypes.Healer, true },
     };
 
@@ -65,13 +59,20 @@ public class WildernessNpcsMod : MonoBehaviour
         { MobileTypes.Spider, 5 },
         { MobileTypes.Rat, 20 },
         { MobileTypes.SkeletalWarrior, 5 },
+        { MobileTypes.Archer, 10 },
         { MobileTypes.Knight, 20 },
-        { MobileTypes.Archer, 20 },
         { MobileTypes.Healer, 10 },
     };
 
     private static Mod _mod;
     private static GameObject _gameObject;
+
+    private int _maximumSpawnGroups = 15;
+    private float _minimumSpawnDistance = 75.0f;
+    private float _maximumSpawnDistance = 200.0f;
+    private float _spawnCheckDistance = 100.0f;
+    private float _minimumUpdateIntervalInSeconds = 10.0f;
+    private float _maximumUpdateIntervalInSeconds = 60.0f;
     private Vector3 _previousPosition;
 
     [Invoke(StateManager.StateTypes.Start, 0)]
@@ -79,7 +80,7 @@ public class WildernessNpcsMod : MonoBehaviour
     {
         _mod = initParams.Mod;
         _gameObject = new GameObject(_mod.Title);
-        _gameObject.AddComponent<WildernessNpcsMod>();
+        _gameObject.AddComponent<WildernessNPCs>();
     }
 
     private void Awake()
@@ -89,10 +90,22 @@ public class WildernessNpcsMod : MonoBehaviour
 
     private void Start()
     {
+        LoadSettings();
         _previousPosition = GetPlayerPosition();
         StartCoroutine(UpdateLoop());
     }
 
+    private void LoadSettings()
+    {
+        const string sectionName = "Spawning";
+        var settings = _mod.GetSettings();
+        _maximumSpawnGroups = settings.GetValue<int>(sectionName, "MaximumSpawnGroups");
+        _minimumSpawnDistance = settings.GetValue<float>(sectionName, "MinimumSpawnDistance");
+        _maximumSpawnDistance = settings.GetValue<float>(sectionName, "MaximumSpawnDistance");
+        _spawnCheckDistance = settings.GetValue<float>(sectionName, "SpawnCheckDistance");
+        _minimumUpdateIntervalInSeconds = settings.GetValue<float>(sectionName, "MinimumUpdateIntervalInSeconds");
+        _maximumUpdateIntervalInSeconds = settings.GetValue<float>(sectionName, "MaximumUpdateIntervalInSeconds");
+    }
 
     private IEnumerator UpdateLoop()
     {
@@ -100,9 +113,9 @@ public class WildernessNpcsMod : MonoBehaviour
         {
             var currentPosition = GetPlayerPosition();
             var deltaDistance = (currentPosition - _previousPosition).magnitude;
-            if (deltaDistance >= SpawnCheckDistance && IsPlayerInWilderness())
+            if (deltaDistance >= _spawnCheckDistance && IsPlayerInWilderness())
             {
-                var numberOfGroupsToSpawn = Random.Range(1, MaxSpawnGroups);
+                var numberOfGroupsToSpawn = Random.Range(1, _maximumSpawnGroups);
                 for (var spawnGroupIndex = 0; spawnGroupIndex < numberOfGroupsToSpawn; ++spawnGroupIndex)
                 {
                     var mobileTypeToSpawn = SpawnableMobileTypes[Random.Range(0, SpawnableMobileTypes.Length)];
@@ -116,13 +129,13 @@ public class WildernessNpcsMod : MonoBehaviour
                     foeSpawner.LineOfSightCheck = false;
                     foeSpawner.FoeType = mobileTypeToSpawn;
                     foeSpawner.AlliedToPlayer = isMobileTypeAnAlly;
-                    foeSpawner.MinDistance = SpawnMinDistance;
-                    foeSpawner.MaxDistance = SpawnMaxDistance;
+                    foeSpawner.MinDistance = _minimumSpawnDistance;
+                    foeSpawner.MaxDistance = _maximumSpawnDistance;
                     foeSpawner.SpawnCount = Random.Range(1, maxSpawnCountForMobileType);
                 }
                 _previousPosition = currentPosition;
             }
-            yield return new WaitForSeconds(Random.Range(MinimumUpdateIntervalInSeconds, MaximumUpdateIntervalInSeconds));
+            yield return new WaitForSeconds(Random.Range(_minimumUpdateIntervalInSeconds, _maximumUpdateIntervalInSeconds));
         }
     }
 

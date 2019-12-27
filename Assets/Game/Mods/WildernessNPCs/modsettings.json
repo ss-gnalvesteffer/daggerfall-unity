@@ -1,0 +1,66 @@
+{
+  "Version": "1.1.0",
+  "Sections": [
+    {
+      "$version": "v1"
+      "Name": "Spawning",
+      "IsAdvanced": false,
+      "Keys": [
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+          "Name": "MaximumSpawnGroups",
+          "Description": "Maximum number of groups to spawn per interval.",
+          "Min": 1,
+          "Max": 100,
+          "Value": 15,
+        },
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+          "Name": "MinimumSpawnDistance",
+          "Description": "Minimum distance that groups can spawn from the player.",
+          "Min": 0.0,
+          "Max": 500.0,
+          "Value": 50.0,
+        },
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+          "Name": "MaximumSpawnDistance",
+          "Description": "Maximum distance that groups can spawn from the player.",
+          "Min": 0.0,
+          "Max": 500.0,
+          "Value": 200.0,
+        },
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+          "Name": "SpawnCheckDistance",
+          "Description": "Distance player has to be from last spawn interval position to spawn NPCs again.",
+          "Min": 0.0,
+          "Max": 1000.0,
+          "Value": 50.0,
+        },
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+          "Name": "MinimumUpdateIntervalInSeconds",
+          "Description": "Minimum duration in seconds between spawn-check intervals.",
+          "Min": 0.0,
+          "Max": 3600.0,
+          "Value": 10.0,
+        },
+        {
+          "$version": "v1",
+          "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderFloatKey"
+          "Name": "MaximumUpdateIntervalInSeconds",
+          "Description": "Maximum duration in seconds between spawn-check intervals.",
+          "Min": 0.0,
+          "Max": 3600.0,
+          "Value": 60.0,
+        },
+      ]
+    },
+  ]
+}
