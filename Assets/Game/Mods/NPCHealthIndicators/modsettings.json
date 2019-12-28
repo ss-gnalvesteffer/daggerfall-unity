@@ -1,0 +1,74 @@
+{
+    "Version": "1.0.0",
+    "Sections": [
+        {
+            "Name": "Settings",
+            "Description": "",
+            "IsAdvanced": false,
+            "Keys": [
+                {
+                    "Value": true,
+                    "Name": "ShowHealthBar",
+                    "Description": "",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                },
+                {
+                    "Options": [
+                        "None",
+                        "Health Percentage",
+                        "Hitpoints / Total Hitpoints",
+                        "Hitpoints",
+                        "Name"
+                    ],
+                    "Value": 1,
+                    "Name": "TextDisplayType",
+                    "Description": "",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.MultipleChoiceKey"
+                },
+                {
+                    "Value": {
+                        "r": 0,
+                        "g": 255,
+                        "b": 0,
+                        "a": 255
+                    },
+                    "Name": "FriendlyNpcIndicatorColor",
+                    "Description": "Color of health indicator for friendly NPCs.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 255,
+                        "g": 0,
+                        "b": 0,
+                        "a": 255
+                    },
+                    "Name": "EnemyNpcIndicatorColor",
+                    "Description": "Color of health indicator for enemy NPCs.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Min": 1,
+                    "Max": 100,
+                    "Value": 10,
+                    "Name": "IndicatorVisibilityDistance",
+                    "Description": "Distance that health indicator can be seen.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.SliderIntKey"
+                },
+                {
+                    "Value": false,
+                    "Name": "ShowWhenNpcIsHurt",
+                    "Description": "Only shows the health indicator if the NPC has taken damage.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ToggleKey"
+                }
+            ],
+            "$version": "v1"
+        }
+    ]
+}

@@ -4,25 +4,25 @@ using DaggerfallWorkshop.Game.Entity;
 using DaggerfallWorkshop.Game.Utility.ModSupport;
 using UnityEngine;
 
-public class HealthIndicatorMod : MonoBehaviour
+public class NpcHealthIndicatorMod : MonoBehaviour
 {
-    private static Mod _mod;
+    public static Mod Mod;
 
     private GameObject _npcHealthIndicatorPrefab;
 
     [Invoke(StateManager.StateTypes.Start, 0)]
     public static void Init(InitParams initParams)
     {
-        _mod = initParams.Mod;
-        var gameObject = new GameObject(_mod.Title);
-        gameObject.AddComponent<HealthIndicatorMod>();
+        Mod = initParams.Mod;
+        var gameObject = new GameObject(Mod.Title);
+        gameObject.AddComponent<NpcHealthIndicatorMod>();
     }
 
     void Awake()
     {
-        _npcHealthIndicatorPrefab = _mod.GetAsset<GameObject>("Assets/NPCHealthIndicator.prefab");
+        _npcHealthIndicatorPrefab = Mod.GetAsset<GameObject>("Assets/NPCHealthIndicator.prefab");
         StartCoroutine(EntityBehavioursUpdateLoop());
-        _mod.IsReady = true;
+        Mod.IsReady = true;
     }
 
     private IEnumerator EntityBehavioursUpdateLoop()
@@ -40,7 +40,7 @@ public class HealthIndicatorMod : MonoBehaviour
                 if (!hasHealthIndicator)
                 {
                     var npcHealthIndicator = Instantiate(_npcHealthIndicatorPrefab, entityBehaviour.transform);
-                    npcHealthIndicator.AddComponent<NPCHealthIndicator>();
+                    npcHealthIndicator.AddComponent<NpcHealthIndicator>();
                 }
             }
             yield return new WaitForSeconds(1.0f);
