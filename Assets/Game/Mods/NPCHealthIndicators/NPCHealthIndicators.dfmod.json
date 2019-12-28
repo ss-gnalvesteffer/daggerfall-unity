@@ -7,10 +7,10 @@
     "ModDescription": "Adds health indicators to NPCs",
     "GUID": "88ed5a31-7e4a-4263-9d3a-483053248b06",
     "Files": [
-        "Assets/Game/Mods/NPCHealthIndicators/NPCHealthIndicators.dfmod.json",
         "Assets/Game/Mods/NPCHealthIndicators/modsettings.json",
+        "Assets/Game/Mods/NPCHealthIndicators/NPCHealthIndicators.dfmod.json",
+        "Assets/Game/Mods/NPCHealthIndicators/Scripts/NpcHealthIndicator.cs",
         "Assets/Game/Mods/NPCHealthIndicators/Scripts/NpcHealthIndicatorMod.cs",
-        "Assets/Game/Mods/NPCHealthIndicators/Scripts/NPCHealthIndicator.cs",
         "Assets/Game/Mods/NPCHealthIndicators/Assets/NPCHealthIndicator.prefab",
         "Assets/Game/Mods/NPCHealthIndicators/Assets/Textures/healthbar.png"
     ],
