@@ -1,5 +1,5 @@
 {
-    "Version": "1.0.0",
+    "Version": "1.1.0",
     "Sections": [
         {
             "Name": "Settings",
@@ -48,6 +48,18 @@
                     },
                     "Name": "EnemyNpcIndicatorColor",
                     "Description": "Color of health indicator for enemy NPCs.",
+                    "$version": "v1",
+                    "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
+                },
+                {
+                    "Value": {
+                        "r": 255,
+                        "g": 255,
+                        "b": 0,
+                        "a": 255
+                    },
+                    "Name": "PacifiedNpcIndicatorColor",
+                    "Description": "Color of health indicator for pacified NPCs.",
                     "$version": "v1",
                     "$type": "DaggerfallWorkshop.Game.Utility.ModSupport.ModSettings.ColorKey"
                 },

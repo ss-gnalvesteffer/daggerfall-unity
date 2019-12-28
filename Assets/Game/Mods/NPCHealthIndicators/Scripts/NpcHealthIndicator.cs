@@ -1,4 +1,5 @@
 ﻿using DaggerfallWorkshop;
+using DaggerfallWorkshop.Game;
 using DaggerfallWorkshop.Game.Entity;
 using TMPro;
 using UnityEngine;
@@ -8,6 +9,7 @@ public class NpcHealthIndicator : MonoBehaviour
     private const float IndicatorMargin = 0.1f;
 
     private DaggerfallEntityBehaviour _entityBehaviour;
+    private EnemyMotor _enemyMotor;
     private TextMeshPro _textMeshPro;
     private GameObject _healthBar;
     private SpriteRenderer _healthBarBackgroundFillSpriteRenderer;
@@ -16,6 +18,7 @@ public class NpcHealthIndicator : MonoBehaviour
     private bool _shouldShowHealthBar;
     private Color _friendlyColor;
     private Color _enemyColor;
+    private Color _pacifiedColor;
     private int _indicatorVisibilityDistance;
     private bool _shouldOnlyShowIndicatorIfNpcIsHurt;
     private int _textDisplayType;
@@ -24,6 +27,7 @@ public class NpcHealthIndicator : MonoBehaviour
     {
         _textMeshPro = gameObject.GetComponentInChildren<TextMeshPro>();
         _entityBehaviour = GetComponentInParent<DaggerfallEntityBehaviour>();
+        _enemyMotor = _entityBehaviour.GetComponent<EnemyMotor>();
         _healthBar = transform.Find("HealthBar").gameObject;
         _healthBarBackgroundFillSpriteRenderer = _healthBar.transform.Find("BackgroundFill").GetComponent<SpriteRenderer>();
         _healthBarForegroundFillSpriteRenderer = _healthBar.transform.Find("ForegroundFill").GetComponent<SpriteRenderer>();
@@ -45,6 +49,7 @@ public class NpcHealthIndicator : MonoBehaviour
         _healthBar.SetActive(_shouldShowHealthBar);
         _friendlyColor = settings.GetColor("Settings", "FriendlyNpcIndicatorColor");
         _enemyColor = settings.GetColor("Settings", "EnemyNpcIndicatorColor");
+        _pacifiedColor = settings.GetColor("Settings", "PacifiedNpcIndicatorColor");
         _indicatorVisibilityDistance = settings.GetInt("Settings", "IndicatorVisibilityDistance");
         _shouldOnlyShowIndicatorIfNpcIsHurt = settings.GetBool("Settings", "ShowWhenNpcIsHurt");
         _textDisplayType = settings.GetInt("Settings", "TextDisplayType");
@@ -57,12 +62,9 @@ public class NpcHealthIndicator : MonoBehaviour
             return;
         }
         _healthBar.SetActive(ShouldShowHealthIndicator());
-        _healthBarBackgroundFillSpriteRenderer.color = _entityBehaviour.Entity.Team == MobileTeams.PlayerAlly
-            ? new Color(_friendlyColor.r * 0.5f, _friendlyColor.g * 0.5f, _friendlyColor.b * 0.5f, _friendlyColor.a)
-            : new Color(_enemyColor.r * 0.5f, _enemyColor.g * 0.5f, _enemyColor.b * 0.5f, _enemyColor.a);
-        _healthBarForegroundFillSpriteRenderer.color = _entityBehaviour.Entity.Team == MobileTeams.PlayerAlly
-            ? _friendlyColor
-            : _enemyColor;
+        var color = GetIndicatorColor();
+        _healthBarBackgroundFillSpriteRenderer.color = new Color(color.r * 0.5f, color.g * 0.5f, color.b * 0.5f, color.a);
+        _healthBarForegroundFillSpriteRenderer.color = color;
         _healthBarForegroundFillSpriteRenderer.size = new Vector2(
             _fullHealthBarFillWidth * _entityBehaviour.Entity.CurrentHealthPercent,
             _healthBarForegroundFillSpriteRenderer.size.y
@@ -83,9 +85,7 @@ public class NpcHealthIndicator : MonoBehaviour
         }
         else
         {
-            _textMeshPro.color = _entityBehaviour.Entity.Team == MobileTeams.PlayerAlly
-                ? _friendlyColor
-                : _enemyColor;
+            _textMeshPro.color = GetIndicatorColor();
         }
 
         switch (_textDisplayType)
@@ -146,5 +146,18 @@ public class NpcHealthIndicator : MonoBehaviour
         return
             (!_shouldOnlyShowIndicatorIfNpcIsHurt || _shouldOnlyShowIndicatorIfNpcIsHurt && healthPercent > 0 && healthPercent < 1) &&
             (transform.position - Camera.main.transform.position).magnitude <= _indicatorVisibilityDistance;
+    }
+
+    private Color GetIndicatorColor()
+    {
+        if (_entityBehaviour.Entity.Team == MobileTeams.PlayerAlly)
+        {
+            return _friendlyColor;
+        }
+        if (_enemyMotor && !_enemyMotor.IsHostile)
+        {
+            return _pacifiedColor;
+        }
+        return _enemyColor;
     }
 }
